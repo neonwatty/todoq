@@ -1,0 +1,46 @@
+{
+  "tasks": [
+    {
+      "number": "1.0",
+      "name": "Project Setup",
+      "description": "Initialize project structure and dependencies",
+      "status": "pending",
+      "priority": 1,
+      "docs_references": [],
+      "testing_strategy": "Unit tests for core functionality",
+      "dependencies": [],
+      "files": [],
+      "notes": "This is a sample task"
+    },
+    {
+      "number": "1.1",
+      "name": "Setup Configuration",
+      "description": "Create configuration files",
+      "parent": "1.0",
+      "status": "pending",
+      "priority": 0,
+      "dependencies": []
+    },
+    {
+      "number": "1.2",
+      "name": "Install Dependencies",
+      "description": "Install required packages",
+      "parent": "1.0",
+      "status": "pending",
+      "priority": 0,
+      "dependencies": [
+        "1.1"
+      ]
+    },
+    {
+      "number": "2.0",
+      "name": "Core Implementation",
+      "description": "Implement main features",
+      "status": "pending",
+      "priority": 2,
+      "dependencies": [
+        "1.0"
+      ]
+    }
+  ]
+}
