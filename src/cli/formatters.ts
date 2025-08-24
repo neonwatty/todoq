@@ -49,8 +49,10 @@ export function formatTask(task: Task, config: TodoqConfig, options: FormatOptio
         lines.push(`  Notes: ${chalk.gray(task.notes)}`);
     }
     
-    if (task.completionNotes && task.status === 'completed') {
-        lines.push(`  Completion: ${chalk.green(task.completionNotes)}`);
+    if (task.completionNotes && (task.status === 'completed' || task.status === 'cancelled')) {
+        const label = task.status === 'completed' ? 'Completion' : 'Cancellation';
+        const color = task.status === 'completed' ? chalk.green : chalk.red;
+        lines.push(`  ${label}: ${color(task.completionNotes)}`);
     }
     
     if (task.completionPercentage !== undefined && task.completionPercentage > 0) {

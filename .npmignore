@@ -1,3 +1,10 @@
+# Commands file
+commands/
+
+# Claude files
+.claude/
+CLAUDE.md
+
 # Source files
 src/
 tests/
@@ -10,9 +17,6 @@ vitest.*.config.ts
 tsconfig.json
 build.js
 .eslintrc.json
-
-# Documentation (development-specific)
-CLAUDE.md
 
 # IDE and editor files
 .vscode/

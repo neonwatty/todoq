@@ -39,7 +39,6 @@ program
     .description('Hierarchical task management CLI with SQLite backend')
     .version(getPackageVersion())
     .option('-c, --config <path>', 'config file path')
-    .option('--json', 'output as JSON')
     .option('-v, --verbose', 'verbose output')
     .hook('preAction', async (thisCommand, actionCommand) => {
         try {

@@ -38,7 +38,10 @@ todoq complete 1.0           # Mark task complete
 - `todoq export --pretty` - Export all tasks as JSON
 
 **Navigation:**
-- `todoq current` - Show current task
+- `todoq current` - Show current task or change its status
+- `todoq current --complete` - Mark current task as completed
+- `todoq current --start` - Mark current task as in progress
+- `todoq current --cancel` - Mark current task as cancelled
 - `todoq list --tree` - Show hierarchical view
 - `todoq show 1.0` - Show task details
 - `todoq search <query>` - Search tasks

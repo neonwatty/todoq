@@ -8,7 +8,7 @@
 
 ## Description
 
-Generate hierarchical TodoQ tasks from a PRD and import them into the TodoQ database.  Note: todoq must be initialized in the $PROJECT_DIR for this command to function properly.
+Generate hierarchical TodoQ tasks from a PRD and import them into the TodoQ database. Note: todoq must be initialized in the $PROJECT_DIR for this command to function properly.
 
 ## Usage
 ```

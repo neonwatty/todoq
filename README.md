@@ -174,6 +174,14 @@ todoq cancel <number> --notes "Reason"  # Cancel with reason
 ```bash
 todoq current                    # Show current task details
 todoq current --number           # Show current task number only
+todoq current --complete         # Mark current task as completed
+todoq current --start            # Mark current task as in progress
+todoq current --reopen           # Mark current task as pending
+todoq current --cancel           # Mark current task as cancelled
+todoq current --complete --notes "Task finished"  # Complete with notes
+todoq current --cancel --notes "No longer needed" # Cancel with reason
+todoq current --complete --force # Force complete ignoring dependencies
+todoq current --complete --json  # JSON output for automation
 todoq next                       # Show next task
 todoq prev                       # Show previous task
 todoq search <query>             # Search tasks by number, name, or description
@@ -285,7 +293,7 @@ All interactive commands fall back to non-interactive mode if you provide the re
 | `export` | Export tasks to JSON | `todoq export --pretty --completed` |
 | `list` | List tasks with filtering options | `todoq list --tree --status pending` |
 | `search` | Search tasks by query | `todoq search "setup"` |
-| `current` | Show current/active task | `todoq current --number` |
+| `current` | Show current task or change its status | `todoq current --complete --notes "Done"` |
 | `next` | Show next task | `todoq next` |
 | `prev` | Show previous task | `todoq prev 1.0` |
 | `show` | Display detailed task information | `todoq show 1.0` |

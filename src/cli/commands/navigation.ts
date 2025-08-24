@@ -2,22 +2,50 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { NavigationService } from '../../core/navigation.js';
 import { TodoqConfig } from '../../core/types.js';
+import { TaskService } from '../../core/task.js';
 import { formatTask } from '../formatters.js';
 
 export function registerNavigationCommands(program: Command): void {
     // Current task command
     program
         .command('current')
-        .description('Show current task details')
+        .description('Show current task details and optionally change status')
         .option('--number', 'show number only')
+        .option('--json', 'output as JSON')
+        .option('-c, --complete', 'mark current task as completed')
+        .option('-s, --start', 'mark current task as in progress')
+        .option('-r, --reopen', 'mark current task as pending')
+        .option('--cancel', 'mark current task as cancelled')
+        .option('--notes <text>', 'completion or cancellation notes')
+        .option('--force', 'ignore dependency checks when completing')
         .action(async (options) => {
             const config = options._config as TodoqConfig;
             const navigationService = options._navigationService as NavigationService;
+            const taskService = options._taskService as TaskService;
 
             try {
                 const currentTask = navigationService.getCurrentTask();
 
+                // Check if status change flags are provided
+                const statusFlags = {
+                    complete: options.complete,
+                    start: options.start,
+                    reopen: options.reopen,
+                    cancel: options.cancel
+                };
+                const hasStatusFlag = Object.values(statusFlags).some(flag => flag);
+
                 if (!currentTask) {
+                    if (hasStatusFlag) {
+                        const message = 'No current task found to update status';
+                        if (options.json) {
+                            console.log(JSON.stringify({ error: message }));
+                        } else {
+                            console.log(chalk.red(message));
+                        }
+                        return;
+                    }
+                    
                     if (options.json) {
                         console.log(JSON.stringify({ message: 'No current task found' }));
                     } else {
@@ -26,12 +54,79 @@ export function registerNavigationCommands(program: Command): void {
                     return;
                 }
 
+                let updatedTask = currentTask;
+                let result: any = null;
+
+                // Handle status changes
+                if (hasStatusFlag) {
+                    // Check for multiple status flags
+                    const activeFlags = Object.entries(statusFlags).filter(([_, value]) => value);
+                    if (activeFlags.length > 1) {
+                        const message = `Only one status flag can be used at a time. Found: ${activeFlags.map(([key]) => `--${key}`).join(', ')}`;
+                        if (options.json) {
+                            console.log(JSON.stringify({ error: message }));
+                        } else {
+                            console.log(chalk.red(message));
+                        }
+                        return;
+                    }
+
+                    if (options.complete) {
+                        if (options.force) {
+                            // Force completion without dependency checks
+                            const updates: any = { status: 'completed' };
+                            if (options.notes) {
+                                updates.completion_notes = options.notes;
+                            }
+                            updatedTask = taskService.update(currentTask.taskNumber, updates);
+                            result = { task: updatedTask, autoCompleted: [] };
+                        } else {
+                            // Use smart completion with dependency checks
+                            result = taskService.completeTask(currentTask.taskNumber, options.notes);
+                            updatedTask = result.task;
+                        }
+                        
+                        if (!options.json && !options.number) {
+                            console.log(chalk.green(`✓ Completed task ${updatedTask.taskNumber}: ${updatedTask.name}`));
+                            if (result.autoCompleted && result.autoCompleted.length > 0) {
+                                console.log(chalk.blue(`Auto-completed parent tasks: ${result.autoCompleted.join(', ')}`));
+                            }
+                        }
+                    } else if (options.start) {
+                        updatedTask = taskService.update(currentTask.taskNumber, { status: 'in_progress' });
+                        if (!options.json && !options.number) {
+                            console.log(chalk.yellow(`→ Started task ${updatedTask.taskNumber}: ${updatedTask.name}`));
+                        }
+                    } else if (options.reopen) {
+                        updatedTask = taskService.update(currentTask.taskNumber, { status: 'pending' });
+                        if (!options.json && !options.number) {
+                            console.log(chalk.blue(`○ Reopened task ${updatedTask.taskNumber}: ${updatedTask.name}`));
+                        }
+                    } else if (options.cancel) {
+                        const updates: any = { status: 'cancelled' };
+                        if (options.notes) {
+                            updates.completion_notes = options.notes;
+                        }
+                        updatedTask = taskService.update(currentTask.taskNumber, updates);
+                        if (!options.json && !options.number) {
+                            console.log(chalk.red(`✗ Cancelled task ${updatedTask.taskNumber}: ${updatedTask.name}`));
+                        }
+                    }
+                }
+
+                // Output task details
                 if (options.json) {
-                    console.log(JSON.stringify(currentTask, null, 2));
+                    if (result && (options.complete && !options.force)) {
+                        // Include completion metadata for smart completion
+                        console.log(JSON.stringify(result, null, 2));
+                    } else {
+                        console.log(JSON.stringify(updatedTask, null, 2));
+                    }
                 } else if (options.number) {
-                    console.log(currentTask.taskNumber);
-                } else {
-                    console.log(formatTask(currentTask, config));
+                    console.log(updatedTask.taskNumber);
+                } else if (!hasStatusFlag) {
+                    // Only show task details if no status change was made (status change already printed message)
+                    console.log(formatTask(updatedTask, config));
                 }
             } catch (error) {
                 throw error;
@@ -43,6 +138,7 @@ export function registerNavigationCommands(program: Command): void {
         .command('next')
         .description('Show next task')
         .option('--number', 'show number only')
+        .option('--json', 'output as JSON')
         .argument('[current]', 'current task number')
         .action(async (currentTaskNumber, options) => {
             const config = options._config as TodoqConfig;
@@ -78,6 +174,7 @@ export function registerNavigationCommands(program: Command): void {
         .alias('previous')
         .description('Show previous task')
         .option('--number', 'show number only')
+        .option('--json', 'output as JSON')
         .argument('[current]', 'current task number')
         .action(async (currentTaskNumber, options) => {
             const config = options._config as TodoqConfig;

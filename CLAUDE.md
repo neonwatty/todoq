@@ -25,6 +25,10 @@ todoq export --pretty         # Export all tasks as JSON
 
 # Navigation
 todoq current                 # Show current task
+todoq current --complete      # Mark current task complete
+todoq current --start         # Mark current task in progress  
+todoq current --reopen        # Mark current task pending
+todoq current --cancel        # Mark current task cancelled
 todoq list --tree            # Show hierarchical view
 todoq show 1.0               # Show task details
 
