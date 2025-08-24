@@ -13,7 +13,7 @@ A TypeScript CLI tool for hierarchical task management with SQLite backend, JSON
 ## Quick Start
 
 ```bash
-# Initialize
+# Initialize (creates .todoq/todoq.db and .todoqrc in current directory)
 todoq init
 
 # Generate template and import tasks
@@ -80,7 +80,9 @@ todoq complete 1.0           # Mark task complete
 
 ## Configuration
 
-Default storage: `~/.todoq/tasks.db`
+**Project-local storage:** 
+- Database: `.todoq/todoq.db` (in current working directory)
+- Config: `.todoqrc` (created by `todoq init`)
 
 Configure via `.todoqrc`, `todoq.config.js`, or `package.json` (todoq property).
 

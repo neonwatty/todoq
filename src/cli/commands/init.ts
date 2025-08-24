@@ -30,7 +30,7 @@ export function registerInitCommands(program: Command): void {
                 }
 
                 // Create default config file
-                const configPath = path.join(process.cwd(), '.todoqrc.json');
+                const configPath = path.join(process.cwd(), '.todoqrc');
                 if (!existsSync(configPath)) {
                     writeFileSync(configPath, JSON.stringify(config, null, 2));
                     console.log(chalk.green(`Created config file: ${configPath}`));

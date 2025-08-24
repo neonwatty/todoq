@@ -120,7 +120,7 @@ npm run dev [command]  # Run commands in development mode
 
 ## Quick Start
 
-1. **Initialize TodoQ**:
+1. **Initialize TodoQ** (creates `.todoq/todoq.db` and `.todoqrc` in current directory):
 ```bash
 todoq init
 ```
@@ -360,21 +360,32 @@ Tasks are defined in JSON format with hierarchical numbering and rich metadata:
 
 ## Configuration
 
+### Database Storage
+
+TodoQ creates a **project-local database** in your current working directory:
+- Database: `.todoq/todoq.db` 
+- Config file: `.todoqrc`
+- Uses SQLite with WAL mode for better concurrency
+
+This means each project gets its own task database, making TodoQ perfect for project-specific task management.
+
+### Configuration Loading
+
 TodoQ uses cosmiconfig for flexible configuration loading. It searches for configuration in:
 
-- `package.json` (todoq property)
-- `.todoqrc`
+- `.todoqrc` (created by `todoq init`)
 - `.todoqrc.json`
 - `.todoqrc.js`
 - `todoq.config.js`
 - `todoq.config.json`
+- `package.json` (todoq property)
 
 ### Default Configuration
 
 ```json
 {
   "database": {
-    "path": "~/.todoq/tasks.db",
+    "path": ".todoq/todoq.db",
     "autoMigrate": true,
     "walMode": true
   },
@@ -459,3 +470,39 @@ TodoQ supports efficient bulk operations with:
 - Detailed validation and error reporting
 - Rollback on failures
 - Progress tracking for large imports
+
+## Testing
+
+TodoQ has a comprehensive test suite covering all aspects of functionality:
+
+### Test Categories
+
+```bash
+# Run all tests
+npm run test:all
+
+# Individual test suites
+npm run test:unit        # Unit tests (fast feedback)
+npm run test:integration # Integration tests (database operations)  
+npm run test:functional  # Functional tests (full CLI workflows)
+
+# Watch mode for development
+npm run test:unit:watch
+npm run test:integration:watch
+npm run test:functional:watch
+
+# Coverage reporting
+npm run test:coverage
+```
+
+**Test Coverage:**
+- **Unit tests** (75+ tests): Core business logic, validation, utilities
+- **Integration tests** (50+ tests): Database operations, CLI command integration
+- **Functional tests** (22+ tests): End-to-end CLI workflows, file system operations
+
+**Functional tests validate:**
+- File creation with correct names (`.todoqrc`, `todoq.db`)
+- Working directory behavior
+- Complete user workflows (init → template → import → complete)
+- Error handling and edge cases
+- Cross-platform compatibility

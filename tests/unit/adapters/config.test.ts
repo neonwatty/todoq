@@ -18,11 +18,11 @@ describe('Config Utilities', () => {
             expect(config.defaults.priority).toBe(0);
         });
 
-        it('should return database path in home directory', () => {
+        it('should return database path in working directory', () => {
             const config = getDefaultConfig();
 
             expect(config.database.path).toContain('.todoq');
-            expect(config.database.path).toContain('tasks.db');
+            expect(config.database.path).toContain('todoq.db');
         });
     });
 

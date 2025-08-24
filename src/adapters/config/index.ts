@@ -6,7 +6,7 @@ import { TodoqConfig, TodoqError } from '../../core/types.js';
 export function getDefaultConfig(): TodoqConfig {
     return {
         database: {
-            path: path.join(os.homedir(), '.todoq', 'tasks.db'),
+            path: path.join(process.cwd(), '.todoq', 'todoq.db'),
             autoMigrate: true,
             walMode: true
         },
@@ -25,12 +25,12 @@ export function getDefaultConfig(): TodoqConfig {
 export async function loadConfig(configPath?: string): Promise<TodoqConfig> {
     const explorer = cosmiconfigSync('todoq', {
         searchPlaces: [
-            'package.json',
             '.todoqrc',
             '.todoqrc.json',
             '.todoqrc.js',
             'todoq.config.js',
-            'todoq.config.json'
+            'todoq.config.json',
+            'package.json'
         ],
         stopDir: os.homedir()
     });
