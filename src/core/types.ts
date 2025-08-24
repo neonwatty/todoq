@@ -10,6 +10,7 @@ export interface Task {
     testingStrategy?: string;
     status: TaskStatus;
     priority: number;
+    dependencies?: string[];
     files?: string[];
     notes?: string;
     completionNotes?: string;

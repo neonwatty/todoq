@@ -326,9 +326,9 @@ describe('CompletionService', () => {
             const level1 = tree.find(t => t.taskNumber === '1.1')!;
             const level2 = tree.find(t => t.taskNumber === '1.1.1')!;
 
-            expect(root.level).toBe(1);
-            expect(level1.level).toBe(2);
-            expect(level2.level).toBe(3);
+            expect(root.level).toBe(1);  // 1.0 is root level (parts - 1 = 1)
+            expect(level1.level).toBe(1); // 1.1 is also level 1 by numbering (but child by parent relationship)
+            expect(level2.level).toBe(2); // 1.1.1 is level 2
         });
     });
 

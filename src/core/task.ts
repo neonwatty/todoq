@@ -71,7 +71,28 @@ export class TaskService {
                 input.completion_notes || null
             );
 
-            const created = this.findById(result.lastInsertRowid as number);
+            const taskId = result.lastInsertRowid as number;
+
+            // Insert dependencies if specified
+            if (input.dependencies && input.dependencies.length > 0) {
+                const dependencyStmt = this.db.prepare(`
+                    INSERT INTO task_dependencies (task_id, depends_on_id) VALUES (?, ?)
+                `);
+
+                for (const depNumber of input.dependencies) {
+                    const depTask = this.findByNumber(depNumber);
+                    if (!depTask) {
+                        throw new TodoqError(
+                            `Dependency task ${depNumber} not found`,
+                            'DEPENDENCY_NOT_FOUND',
+                            { taskNumber: input.number, dependencyNumber: depNumber }
+                        );
+                    }
+                    dependencyStmt.run(taskId, depTask.id);
+                }
+            }
+
+            const created = this.findById(taskId);
             if (!created) {
                 throw new TodoqError('Failed to create task', 'CREATE_ERROR');
             }
@@ -473,6 +494,9 @@ export class TaskService {
 
     // Map database row to Task object
     private mapRowToTask(row: any): Task {
+        // Get dependencies for this task
+        const dependencies = this.getTaskDependencyNumbers(row.id);
+
         return {
             id: row.id,
             parentId: row.parent_id || undefined,
@@ -483,6 +507,7 @@ export class TaskService {
             testingStrategy: row.testing_strategy || undefined,
             status: row.status as TaskStatus,
             priority: row.priority,
+            dependencies: dependencies.length > 0 ? dependencies : undefined,
             files: row.files ? JSON.parse(row.files) : undefined,
             notes: row.notes || undefined,
             completionNotes: row.completion_notes || undefined,
@@ -490,5 +515,24 @@ export class TaskService {
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)
         };
+    }
+
+    // Helper method to get dependency task numbers for a given task ID
+    private getTaskDependencyNumbers(taskId: number): string[] {
+        try {
+            const stmt = this.db.prepare(`
+                SELECT t.task_number
+                FROM tasks t
+                INNER JOIN task_dependencies td ON t.id = td.depends_on_id
+                WHERE td.task_id = ?
+                ORDER BY t.task_number
+            `);
+            
+            const rows = stmt.all(taskId) as Array<{ task_number: string }>;
+            return rows.map(row => row.task_number);
+        } catch (error) {
+            // Return empty array if there's an error fetching dependencies
+            return [];
+        }
     }
 }

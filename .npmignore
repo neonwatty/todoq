@@ -1,0 +1,31 @@
+# Source files
+src/
+tests/
+
+# Development files
+*.test.ts
+*.test.js
+vitest.*.config.ts
+tsconfig.json
+build.js
+
+# Documentation
+todoq-implementation-plan.md
+CLAUDE.md
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# Test output
+coverage/
+
+# Sample files  
+sample-tasks.json
