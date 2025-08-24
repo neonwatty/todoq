@@ -47,8 +47,8 @@ export class DatabaseClient {
         return trx();
     }
 
-    public prepare<T = any>(sql: string): Database.Statement<T> {
-        return this.db.prepare(sql);
+    public prepare<T extends unknown[] = unknown[]>(sql: string): Database.Statement<T> {
+        return this.db.prepare(sql) as Database.Statement<T>;
     }
 
     public exec(sql: string): Database.Database {

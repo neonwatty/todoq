@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import os from 'os';
 import { getDefaultConfig } from '../../adapters/config/index.js';
 import { TodoqConfig } from '../../core/types.js';
 

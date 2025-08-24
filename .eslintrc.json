@@ -1,23 +1,36 @@
 {
-  "parser": "@typescript-eslint/parser",
+  "env": {
+    "es2022": true,
+    "node": true
+  },
   "extends": [
     "eslint:recommended"
   ],
-  "plugins": ["@typescript-eslint"],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "module"
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json"
   },
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "rules": {
-    "no-unused-vars": "warn",
-    "no-explicit-any": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "no-console": "off",
-    "no-useless-catch": "warn",
-    "no-prototype-builtins": "warn"
+    "prefer-const": "error",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-template": "error",
+    "no-undef": "off",
+    "no-useless-catch": "off",
+    "no-prototype-builtins": "off"
   },
-  "env": {
-    "node": true,
-    "es2022": true
-  },
-  "ignorePatterns": ["dist/", "node_modules/", "build.js"]
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "*.js",
+    "build.js"
+  ]
 }

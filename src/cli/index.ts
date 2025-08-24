@@ -2,6 +2,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { loadConfig } from '../adapters/config/index.js';
 import { DatabaseClient } from '../adapters/database/client.js';
 import { MigrationManager } from '../adapters/database/migrations.js';
@@ -9,6 +11,19 @@ import { TaskService } from '../core/task.js';
 import { NavigationService } from '../core/navigation.js';
 import { TodoqError } from '../core/types.js';
 import { registerCommands } from './commands/index.js';
+
+// Get package.json version in a way that works with both ESM and CJS
+const getPackageVersion = (): string => {
+  try {
+    // Try to find package.json relative to the built file location
+    const packageJsonPath = join(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.version;
+  } catch {
+    // Fallback version if package.json can't be read
+    return '0.0.1';
+  }
+};
 
 const program = new Command();
 
@@ -36,7 +51,7 @@ function handleError(error: unknown): void {
 program
     .name('todoq')
     .description('Hierarchical task management CLI with SQLite backend')
-    .version('1.0.0')
+    .version(getPackageVersion())
     .option('-c, --config <path>', 'config file path')
     .option('--json', 'output as JSON')
     .option('-v, --verbose', 'verbose output')

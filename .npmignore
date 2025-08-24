@@ -5,27 +5,52 @@ tests/
 # Development files
 *.test.ts
 *.test.js
+vitest.config.ts
 vitest.*.config.ts
 tsconfig.json
 build.js
+.eslintrc.json
 
-# Documentation
-todoq-implementation-plan.md
+# Documentation (development-specific)
 CLAUDE.md
 
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Environment files
 .env
 .env.local
+.env.*
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Test output
 coverage/
+.nyc_output/
 
 # Sample files  
 sample-tasks.json
+
+# Git files
+.gitignore
+.git/
+
+# CI/CD files
+.github/
+.travis.yml
+.circleci/
+
+# Package manager files
+.npmrc
+yarn.lock
+
+# macOS files
+.DS_Store

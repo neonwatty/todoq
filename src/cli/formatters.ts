@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import Table from 'cli-table3';
 import { Task, TodoqConfig, TaskStats } from '../core/types.js';
 
 export interface FormatOptions {
@@ -124,7 +125,6 @@ function formatTaskTree(tasks: Task[], config: TodoqConfig): string {
 
 function formatTaskTable(tasks: Task[], config: TodoqConfig): string {
     // Use cli-table3 for table formatting
-    const Table = require('cli-table3');
     
     const table = new Table({
         head: ['Number', 'Name', 'Status', 'Priority', 'Progress'],
@@ -139,7 +139,7 @@ function formatTaskTable(tasks: Task[], config: TodoqConfig): string {
             
         table.push([
             task.taskNumber,
-            task.name.length > 27 ? task.name.substring(0, 24) + '...' : task.name,
+            task.name.length > 27 ? `${task.name.substring(0, 24)  }...` : task.name,
             statusColor(task.status),
             task.priority > 0 ? `P${task.priority}` : '',
             progressText

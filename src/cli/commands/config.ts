@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, readFileSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import { TodoqConfig } from '../../core/types.js';
@@ -41,7 +41,7 @@ export function registerConfigCommands(program: Command): void {
         .command('set')
         .description('Set configuration value')
         .argument('<key=value>', 'configuration key-value pair')
-        .action(async (keyValue, options) => {
+        .action(async (keyValue) => {
             try {
                 const [key, ...valueParts] = keyValue.split('=');
                 const value = valueParts.join('=');
@@ -63,7 +63,7 @@ export function registerConfigCommands(program: Command): void {
                 let config = getDefaultConfig();
 
                 if (configPath && existsSync(configPath)) {
-                    const existingConfig = JSON.parse(require('fs').readFileSync(configPath, 'utf-8'));
+                    const existingConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
                     config = { ...config, ...existingConfig };
                 }
 
@@ -189,7 +189,7 @@ function setConfigValue(config: any, key: string, value: any): void {
 }
 
 function printConfigSection(title: string, section: any): void {
-    console.log(chalk.blue(title + ':'));
+    console.log(chalk.blue(`${title  }:`));
     Object.entries(section).forEach(([key, value]) => {
         console.log(`  ${chalk.cyan(key)}: ${chalk.white(String(value))}`);
     });

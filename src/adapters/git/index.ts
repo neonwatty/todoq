@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import { TodoqError } from '../../core/types.js';
 
 export class GitFileTracker {
     private taskStartStates = new Map<string, string>();

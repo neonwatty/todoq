@@ -219,7 +219,7 @@ export function validateTaskHierarchy(taskNumber: string, parentNumber?: string)
     // For 1.0 -> 1.1: both have 2 parts, first part same, second part should be greater
     // For 1.0 -> 1.0.1: task has more parts
     
-    if (taskParts.length === parentParts.length + 1 && taskNumber.startsWith(parentNumber + '.')) {
+    if (taskParts.length === parentParts.length + 1 && taskNumber.startsWith(`${parentNumber  }.`)) {
         // Style 1: 1.0 -> 1.0.1 (extends parent)
         return true;
     } else if (taskParts.length === parentParts.length) {

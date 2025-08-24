@@ -1,15 +1,29 @@
 import { build } from 'esbuild';
 import { writeFileSync, readFileSync, chmodSync } from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
+const execAsync = promisify(exec);
+
+// Build the CLI with esbuild
 await build({
   entryPoints: ['src/cli/index.ts'],
   bundle: true,
   platform: 'node',
-  target: 'node18',
+  target: 'node22',
   outfile: 'dist/cli/index.js',
-  format: 'cjs',
-  external: ['better-sqlite3']
+  format: 'esm',
+  external: ['better-sqlite3', 'inquirer', 'chalk', 'ora', 'cli-table3', 'cosmiconfig', 'zod', 'commander', 'fs', 'path', 'os']
 });
+
+// Generate TypeScript declarations using tsc
+console.log('Generating TypeScript declarations...');
+try {
+  await execAsync('npx tsc --emitDeclarationOnly --outDir dist');
+  console.log('TypeScript declarations generated successfully!');
+} catch (error) {
+  console.warn('Warning: Failed to generate TypeScript declarations:', error.message);
+}
 
 // Add shebang if not present
 const content = readFileSync('dist/cli/index.js', 'utf-8');

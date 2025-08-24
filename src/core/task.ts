@@ -291,7 +291,7 @@ export class TaskService {
             }
 
             if (conditions.length > 0) {
-                query += ' WHERE ' + conditions.join(' AND ');
+                query += ` WHERE ${  conditions.join(' AND ')}`;
             }
 
             query += ' ORDER BY task_number';
