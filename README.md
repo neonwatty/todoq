@@ -22,11 +22,6 @@ A comprehensive TypeScript CLI tool that transforms hierarchical task systems in
 - [Architecture](#architecture)
 - [Database Schema](#database-schema)
 - [Advanced Features](#advanced-features)
-- [Claude Code Integration](#claude-code-integration)
-- [Use Cases](#use-cases)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Overview
 

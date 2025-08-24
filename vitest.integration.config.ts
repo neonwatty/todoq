@@ -20,6 +20,13 @@ export default defineConfig({
           statements: 70
         }
       }
+    },
+    // Run tests sequentially to avoid file system conflicts
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true
+      }
     }
   },
 });

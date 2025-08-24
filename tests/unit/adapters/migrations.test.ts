@@ -314,7 +314,7 @@ describe('MigrationManager', () => {
             migrationManager.initialize();
         });
 
-        it('should update tasks.updated_at on task updates', () => {
+        it('should update tasks.updated_at on task updates', async () => {
             // Insert a task
             db.prepare(`
                 INSERT INTO tasks (task_number, name, created_at, updated_at) 
@@ -324,17 +324,18 @@ describe('MigrationManager', () => {
             // Get initial updated_at
             const initialTask = db.prepare('SELECT updated_at FROM tasks WHERE task_number = ?').get('1.0') as { updated_at: string };
 
-            // Wait a bit and update
-            setTimeout(() => {
-                db.prepare('UPDATE tasks SET name = ? WHERE task_number = ?').run('Updated Task', '1.0');
+            // Wait a bit to ensure different timestamp
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            // Update task
+            db.prepare('UPDATE tasks SET name = ? WHERE task_number = ?').run('Updated Task', '1.0');
 
-                const updatedTask = db.prepare('SELECT updated_at FROM tasks WHERE task_number = ?').get('1.0') as { updated_at: string };
+            const updatedTask = db.prepare('SELECT updated_at FROM tasks WHERE task_number = ?').get('1.0') as { updated_at: string };
 
-                expect(new Date(updatedTask.updated_at).getTime()).toBeGreaterThan(new Date(initialTask.updated_at).getTime());
-            }, 10);
+            expect(new Date(updatedTask.updated_at).getTime()).toBeGreaterThan(new Date(initialTask.updated_at).getTime());
         });
 
-        it('should update config.updated_at on config updates', () => {
+        it('should update config.updated_at on config updates', async () => {
             // Insert config
             db.prepare(`
                 INSERT INTO config (key, value, updated_at) 
@@ -343,14 +344,15 @@ describe('MigrationManager', () => {
 
             const initialConfig = db.prepare('SELECT updated_at FROM config WHERE key = ?').get('test_key') as { updated_at: string };
 
+            // Wait a bit to ensure different timestamp
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
             // Update config
-            setTimeout(() => {
-                db.prepare('UPDATE config SET value = ? WHERE key = ?').run('new_value', 'test_key');
+            db.prepare('UPDATE config SET value = ? WHERE key = ?').run('new_value', 'test_key');
 
-                const updatedConfig = db.prepare('SELECT updated_at FROM config WHERE key = ?').get('test_key') as { updated_at: string };
+            const updatedConfig = db.prepare('SELECT updated_at FROM config WHERE key = ?').get('test_key') as { updated_at: string };
 
-                expect(new Date(updatedConfig.updated_at).getTime()).toBeGreaterThan(new Date(initialConfig.updated_at).getTime());
-            }, 10);
+            expect(new Date(updatedConfig.updated_at).getTime()).toBeGreaterThan(new Date(initialConfig.updated_at).getTime());
         });
     });
 });

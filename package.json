@@ -1,6 +1,6 @@
 {
   "name": "todoq",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Hierarchical task management CLI with SQLite backend",
   "type": "module",
   "main": "dist/cli/index.js",
