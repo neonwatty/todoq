@@ -65,7 +65,7 @@ Help developers work on tasks with auto-fetched documentation context and implem
 8. **Testing & Validation Pipeline**
    - **CHECKPOINT**: Verify step 7 completed in TodoWrite before proceeding
    - Determine proper unit and integration tests for implemented functionality
-   - Use Bash tool to run project-specific testing commands (npm test, cargo test, etc.)
+   - Use Bash tool to run project-specific testing commands
    - Use Bash tool to run linting/typecheck validation if available (npm run lint, npm run typecheck)
    - On ANY test failures: Create specific recovery todos, keep step 8 as in_progress, and STOP
    - **COMPLETION**: Only mark step 8 complete when ALL tests pass, start step 9
@@ -74,6 +74,7 @@ Help developers work on tasks with auto-fetched documentation context and implem
    - **CHECKPOINT**: Verify step 8 completed in TodoWrite before proceeding
    - Use Task tool to spawn independent validation agent for comprehensive review
    - Validation agent must double-check implementation against original task requirements
+   - Validation agent can use the Bash tool to look at current repo changes with `git status`
    - If validation fails: Create specific fix todos, keep step 9 as in_progress, and STOP
    - **COMPLETION**: Mark step 9 complete, start step 10
 
