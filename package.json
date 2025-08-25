@@ -26,6 +26,8 @@
     "test:unit:watch": "vitest --config vitest.unit.config.ts --watch",
     "test:integration:watch": "vitest --config vitest.integration.config.ts --watch",
     "test:functional:watch": "vitest --config vitest.functional.config.ts --watch",
+    "test:claude": "vitest --config vitest.claude.config.ts --run --reporter=verbose",
+    "test:claude:watch": "vitest --config vitest.claude.config.ts --watch",
     "test:coverage": "vitest --coverage --run",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
@@ -73,6 +75,7 @@
     "@vitest/coverage-v8": "^1.6.1",
     "esbuild": "^0.19.11",
     "eslint": "^8.56.0",
+    "execa": "^9.6.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.3"

@@ -4,11 +4,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/functional/**/*.test.ts'],
-    exclude: ['tests/claude/**'],
-    testTimeout: 45000, // Longer timeout for file system operations and CLI execution
-    hookTimeout: 30000, // Longer timeout for setup/teardown
-    setupFiles: ['tests/functional/setup.ts'],
+    include: ['tests/claude/**/*.test.ts'],
+    testTimeout: 180000, // 3 minutes for Claude Code integration tests
+    hookTimeout: 30000, // 30 second timeout for setup/teardown
+    setupFiles: ['tests/functional/setup.ts'], // Reuse functional test setup
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
@@ -16,14 +15,14 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'html', 'text-summary'],
       thresholds: {
         global: {
-          branches: 60,
-          functions: 60,
-          lines: 60,
-          statements: 60
+          branches: 40, // Lower thresholds for integration tests
+          functions: 40,
+          lines: 40,
+          statements: 40
         }
       }
     },
-    // Run tests sequentially to avoid file system conflicts
+    // Run tests sequentially to avoid Claude Code conflicts
     pool: 'forks',
     poolOptions: {
       forks: {

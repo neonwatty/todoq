@@ -1,10 +1,7 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { execa } from 'execa';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { getCliPath } from './setup.js';
-
-const execAsync = promisify(exec);
 
 export interface CLIResult {
     stdout: string;
@@ -21,18 +18,22 @@ export async function runCliInDir(
     options: { expectError?: boolean; timeout?: number } = {}
 ): Promise<CLIResult> {
     const cliPath = getCliPath();
-    const fullCommand = `cd "${testDir}" && node "${cliPath}" ${command}`;
+    const commandArgs = command.split(' ');
     const timeout = options.timeout || 30000;
     
     try {
-        const { stdout, stderr } = await execAsync(fullCommand, { timeout });
-        return { stdout, stderr, code: 0 };
+        const result = await execa('node', [cliPath, ...commandArgs], {
+            timeout,
+            cwd: testDir,
+            stdio: ['inherit', 'pipe', 'pipe'] // Give tool access to stdin while capturing output
+        });
+        return { stdout: result.stdout, stderr: result.stderr, code: 0 };
     } catch (error: any) {
         if (options.expectError) {
             return { 
                 stdout: error.stdout || '', 
                 stderr: error.stderr || error.message || '', 
-                code: error.code || 1 
+                code: error.exitCode || error.code || 1 
             };
         }
         throw error;

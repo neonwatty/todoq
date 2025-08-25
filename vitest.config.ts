@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    exclude: ['tests/claude/**'],
     testTimeout: 30000,
     setupFiles: [],
     coverage: {
