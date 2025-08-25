@@ -340,4 +340,44 @@ export function registerTaskCommands(program: Command): void {
                 throw error;
             }
         });
+
+    // Clear all tasks
+    program
+        .command('clear')
+        .description('Delete all tasks')
+        .option('--confirm', 'skip confirmation prompt')
+        .option('--json', 'output as JSON')
+        .action(async (options) => {
+            const taskService = options._taskService as TaskService;
+
+            try {
+                if (!options.confirm) {
+                    const { confirmed } = await inquirer.prompt([{
+                        type: 'confirm',
+                        name: 'confirmed',
+                        message: 'Delete all tasks? This action cannot be undone.',
+                        default: false
+                    }]);
+
+                    if (!confirmed) {
+                        console.log(chalk.yellow('Cancelled'));
+                        return;
+                    }
+                }
+
+                const deletedCount = taskService.deleteAll();
+
+                if (options.json) {
+                    console.log(JSON.stringify({ deletedCount }, null, 2));
+                } else {
+                    if (deletedCount > 0) {
+                        console.log(chalk.green(`✓ Deleted ${deletedCount} task${deletedCount > 1 ? 's' : ''}`));
+                    } else {
+                        console.log(chalk.yellow('No tasks to delete'));
+                    }
+                }
+            } catch (error) {
+                throw error;
+            }
+        });
 }

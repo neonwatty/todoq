@@ -1,3 +1,8 @@
+# Local files
+old-prds/
+old-tasks/
+.todoq/
+
 # Commands file
 commands/
 

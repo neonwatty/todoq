@@ -57,6 +57,8 @@ todoq complete 1.0           # Mark task complete
 - `todoq start 1.0` - Mark task in progress (alias: in-progress)
 - `todoq reopen 1.0` - Mark task incomplete (alias: incomplete)
 - `todoq cancel 1.0` - Mark task cancelled
+- `todoq clear` - Delete all tasks (with confirmation prompt)
+- `todoq clear --confirm` - Delete all tasks (skip confirmation)
 
 ## Task JSON Format
 

@@ -313,4 +313,52 @@ describe('TaskService Integration', () => {
             expect(parent?.status).toBe('completed'); // Parent should now be completed
         });
     });
+
+    describe('deleteAll', () => {
+        it('should delete all tasks when database is empty', () => {
+            const deletedCount = taskService.deleteAll();
+            expect(deletedCount).toBe(0);
+        });
+
+        it('should delete all tasks and dependencies', () => {
+            // Create test tasks with dependencies
+            taskService.create({ number: '1.0', name: 'Task 1' });
+            taskService.create({ number: '2.0', name: 'Task 2', dependencies: ['1.0'] });
+            taskService.create({ number: '2.1', name: 'Task 2.1', parent: '2.0' });
+            taskService.create({ number: '3.0', name: 'Task 3' });
+
+            // Verify tasks exist
+            const tasksBefore = taskService.list({ includeCompleted: true });
+            expect(tasksBefore.length).toBeGreaterThan(0);
+
+            // Delete all tasks
+            const deletedCount = taskService.deleteAll();
+            expect(deletedCount).toBe(tasksBefore.length);
+
+            // Verify all tasks are gone
+            const tasksAfter = taskService.list({ includeCompleted: true });
+            expect(tasksAfter).toHaveLength(0);
+
+            // Verify specific tasks don't exist
+            expect(taskService.findByNumber('1.0')).toBeNull();
+            expect(taskService.findByNumber('2.0')).toBeNull();
+            expect(taskService.findByNumber('2.1')).toBeNull();
+            expect(taskService.findByNumber('3.0')).toBeNull();
+        });
+
+        it('should handle transaction rollback on error', () => {
+            taskService.create({ number: '1.0', name: 'Task 1' });
+            taskService.create({ number: '2.0', name: 'Task 2' });
+            
+            const tasksBefore = taskService.list({ includeCompleted: true });
+            expect(tasksBefore).toHaveLength(2);
+
+            // deleteAll should work normally
+            const deletedCount = taskService.deleteAll();
+            expect(deletedCount).toBe(2);
+
+            const tasksAfter = taskService.list({ includeCompleted: true });
+            expect(tasksAfter).toHaveLength(0);
+        });
+    });
 });

@@ -167,6 +167,8 @@ todoq in-progress <number>       # Mark task as in-progress
 todoq start <number>             # Alias for in-progress
 todoq cancel <number>            # Mark task as cancelled
 todoq cancel <number> --notes "Reason"  # Cancel with reason
+todoq clear                      # Delete all tasks (with confirmation)
+todoq clear --confirm            # Delete all tasks (skip confirmation)
 ```
 
 ### Navigation & Status
@@ -306,6 +308,7 @@ All interactive commands fall back to non-interactive mode if you provide the re
 | `incomplete` | Mark task as pending | `todoq incomplete 1.0` |
 | `in-progress` | Mark task as in progress | `todoq in-progress 1.0` |
 | `cancel` | Mark task as cancelled | `todoq cancel 1.0 --notes "Not needed"` |
+| `clear` | Delete all tasks | `todoq clear --confirm --json` |
 | `remaining` | Count incomplete tasks | `todoq remaining --count --json` |
 | `stats` | Show project statistics | `todoq stats` |
 | `status` | Overall project status summary | `todoq status` |

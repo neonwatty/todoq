@@ -256,6 +256,33 @@ export class TaskService {
         }
     }
 
+    // Delete all tasks
+    deleteAll(): number {
+        try {
+            return this.db.transaction(() => {
+                // Get count before deletion
+                const countStmt = this.db.prepare('SELECT COUNT(*) as count FROM tasks');
+                const countResult = countStmt.get() as { count: number };
+                
+                // Delete all dependencies first
+                const deleteDepsStmt = this.db.prepare('DELETE FROM task_dependencies');
+                deleteDepsStmt.run();
+
+                // Delete all tasks
+                const deleteTasksStmt = this.db.prepare('DELETE FROM tasks');
+                deleteTasksStmt.run();
+                
+                return countResult.count;
+            });
+        } catch (error) {
+            throw new TodoqError(
+                `Failed to delete all tasks: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                'DELETE_ALL_ERROR',
+                { error }
+            );
+        }
+    }
+
     // List tasks with optional filtering
     list(options: {
         status?: TaskStatus;

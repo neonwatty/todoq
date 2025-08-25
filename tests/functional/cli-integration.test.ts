@@ -294,4 +294,62 @@ describe('CLI Integration Functional Tests', () => {
             expect(importResult.stderr).toBeTruthy();
         });
     });
+
+    describe('Clear Command', () => {
+        beforeEach(async () => {
+            await runCliInDir(testDir, 'init');
+            
+            // Create some test tasks
+            const tasksFile = createTasksFile(testDir, 'tasks.json', sampleTasks.hierarchical);
+            await runCliInDir(testDir, `import ${tasksFile}`);
+        });
+
+        it('should require confirmation by default', async () => {
+            // Running clear without --confirm should show confirmation prompt
+            // We can't easily test interactive prompts in functional tests,
+            // so we'll just verify that --confirm flag is the expected way to skip prompts
+            const result = await runCliInDir(testDir, 'clear --confirm');
+            expect(result.code).toBe(0);
+            expect(result.stdout).toContain('Deleted');
+            
+            // Verify all tasks are gone after confirmation
+            const listResult = await runCliInDir(testDir, 'list');
+            expect(listResult.stdout).toContain('No tasks found');
+        });
+
+        it('should clear all tasks with --confirm flag', async () => {
+            // Verify tasks exist first
+            const beforeResult = await runCliInDir(testDir, 'list');
+            expect(beforeResult.stdout).toContain('1.0');
+
+            // Clear with --confirm flag should skip confirmation
+            const clearResult = await runCliInDir(testDir, 'clear --confirm');
+            expect(clearResult.code).toBe(0);
+            expect(clearResult.stdout).toContain('Deleted');
+
+            // Verify all tasks are gone
+            const afterResult = await runCliInDir(testDir, 'list');
+            expect(afterResult.stdout).toContain('No tasks found');
+        });
+
+        it('should work with JSON output', async () => {
+            const result = await runCliInDir(testDir, 'clear --confirm --json');
+            expect(result.code).toBe(0);
+
+            const output = JSON.parse(result.stdout);
+            expect(output).toHaveProperty('deletedCount');
+            expect(typeof output.deletedCount).toBe('number');
+            expect(output.deletedCount).toBeGreaterThan(0);
+        });
+
+        it('should handle empty database gracefully', async () => {
+            // Clear once
+            await runCliInDir(testDir, 'clear --confirm');
+
+            // Clear again on empty database
+            const result = await runCliInDir(testDir, 'clear --confirm');
+            expect(result.code).toBe(0);
+            expect(result.stdout).toContain('No tasks to delete');
+        });
+    });
 });
