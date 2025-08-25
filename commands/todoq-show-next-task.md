@@ -18,6 +18,7 @@ Display the next task from TodoQ database for user review without taking any imp
 1. **Change Directory**: Navigate to $PROJECT_DIR (or repository root if not specified)
 
 2. **Task Discovery**
+   - Run `todoq remaining --count`, if the count is 0 return 'no more tasks remaining'
    - Run `todoq current --number` to get the next uncompleted task number
    - Return this task number to the user
    - If the return value is not a number, return exactly: 'no more tasks'
