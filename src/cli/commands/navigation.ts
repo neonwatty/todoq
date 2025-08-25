@@ -217,6 +217,8 @@ export function registerNavigationCommands(program: Command): void {
     program
         .command('remaining')
         .description('Count incomplete tasks')
+        .option('--json', 'output as JSON')
+        .option('--count', 'output count only')
         .action(async (options) => {
             const navigationService = options._navigationService as NavigationService;
 
@@ -225,6 +227,8 @@ export function registerNavigationCommands(program: Command): void {
 
                 if (options.json) {
                     console.log(JSON.stringify({ remaining: count }));
+                } else if (options.count) {
+                    console.log(count);
                 } else {
                     console.log(chalk.blue(`${count} tasks remaining`));
                 }

@@ -187,6 +187,8 @@ todoq prev                       # Show previous task
 todoq search <query>             # Search tasks by number, name, or description
 todoq find <query>               # Alias for search
 todoq remaining                  # Count incomplete tasks
+todoq remaining --count          # Show count as number only  
+todoq remaining --json           # Show count in JSON format
 todoq stats                      # Progress statistics
 todoq progress                   # Show tree with completion percentages
 todoq status                     # Overall project status summary
@@ -304,7 +306,7 @@ All interactive commands fall back to non-interactive mode if you provide the re
 | `incomplete` | Mark task as pending | `todoq incomplete 1.0` |
 | `in-progress` | Mark task as in progress | `todoq in-progress 1.0` |
 | `cancel` | Mark task as cancelled | `todoq cancel 1.0 --notes "Not needed"` |
-| `remaining` | Count incomplete tasks | `todoq remaining` |
+| `remaining` | Count incomplete tasks | `todoq remaining --count --json` |
 | `stats` | Show project statistics | `todoq stats` |
 | `status` | Overall project status summary | `todoq status` |
 | `progress` | Display progress tree | `todoq progress --root 1.0` |

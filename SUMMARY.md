@@ -45,6 +45,8 @@ todoq complete 1.0           # Mark task complete
 - `todoq list --tree` - Show hierarchical view
 - `todoq show 1.0` - Show task details
 - `todoq search <query>` - Search tasks
+- `todoq remaining --count` - Count incomplete tasks (number only)
+- `todoq remaining --json` - Count incomplete tasks (JSON format)
 - `todoq stats` - Show progress statistics
 
 **Task Management:**

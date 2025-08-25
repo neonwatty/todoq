@@ -1084,4 +1084,335 @@ describe('CLI Integration Tests', () => {
             expect(result.stderr).toContain('Unexpected error');
         });
     });
+
+    describe('Remaining Command', () => {
+        beforeEach(async () => {
+            // Initialize database first
+            await runCLI('init');
+
+            // Create test tasks with mixed statuses
+            const testTasks = {
+                tasks: [
+                    {
+                        number: '1.0',
+                        name: 'Pending Task 1',
+                        description: 'First pending task',
+                        status: 'pending',
+                        priority: 1
+                    },
+                    {
+                        number: '2.0',
+                        name: 'Completed Task',
+                        description: 'Already completed task',
+                        status: 'completed',
+                        priority: 2
+                    },
+                    {
+                        number: '3.0',
+                        name: 'In Progress Task',
+                        description: 'Task currently in progress',
+                        status: 'in_progress',
+                        priority: 0
+                    },
+                    {
+                        number: '4.0',
+                        name: 'Cancelled Task',
+                        description: 'Cancelled task',
+                        status: 'cancelled',
+                        priority: 1
+                    },
+                    {
+                        number: '5.0',
+                        name: 'Pending Task 2',
+                        description: 'Second pending task',
+                        status: 'pending',
+                        priority: 3
+                    }
+                ]
+            };
+
+            writeFileSync(TEST_JSON_PATH, JSON.stringify(testTasks, null, 2));
+            await runCLI(`import "${TEST_JSON_PATH}"`);
+        });
+
+        describe('Default output', () => {
+            it('should show remaining count in default format', async () => {
+                const result = await runCLI('remaining');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout).toMatch(/3 tasks remaining/); // 2 pending + 1 in_progress
+            });
+
+            it('should show 0 when all tasks are completed', async () => {
+                // Complete all remaining tasks
+                await runCLI('complete 1.0');
+                await runCLI('complete 3.0');
+                await runCLI('complete 5.0');
+
+                const result = await runCLI('remaining');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout).toMatch(/0 tasks remaining/);
+            });
+
+            it('should show correct count after completing some tasks', async () => {
+                // Complete one pending task
+                await runCLI('complete 1.0');
+
+                const result = await runCLI('remaining');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout).toMatch(/2 tasks remaining/); // 1 pending + 1 in_progress
+            });
+        });
+
+        describe('JSON output', () => {
+            it('should show remaining count in JSON format', async () => {
+                const result = await runCLI('remaining --json');
+
+                expect(result.code).toBe(0);
+                
+                // Should be valid JSON
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(data.remaining).toBe(3); // 2 pending + 1 in_progress
+            });
+
+            it('should show 0 in JSON when all tasks completed', async () => {
+                // Complete all remaining tasks
+                await runCLI('complete 1.0');
+                await runCLI('complete 3.0');
+                await runCLI('complete 5.0');
+
+                const result = await runCLI('remaining --json');
+
+                expect(result.code).toBe(0);
+                
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(data.remaining).toBe(0);
+            });
+
+            it('should show correct count in JSON after completing some tasks', async () => {
+                // Complete two tasks
+                await runCLI('complete 1.0');
+                await runCLI('complete 5.0');
+
+                const result = await runCLI('remaining --json');
+
+                expect(result.code).toBe(0);
+                
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(data.remaining).toBe(1); // Only in_progress task left
+            });
+
+            it('should not contain ANSI color codes in JSON output', async () => {
+                const result = await runCLI('remaining --json');
+                
+                expect(result.code).toBe(0);
+                // JSON output should not contain ANSI escape sequences
+                expect(result.stdout).not.toMatch(/\u001b\[[0-9;]*m/);
+            });
+        });
+
+        describe('Count-only output', () => {
+            it('should show remaining count as number only', async () => {
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).toMatch(/^3$/); // Only the number
+            });
+
+            it('should show 0 as count-only when all tasks completed', async () => {
+                // Complete all remaining tasks
+                await runCLI('complete 1.0');
+                await runCLI('complete 3.0');
+                await runCLI('complete 5.0');
+
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).toMatch(/^0$/);
+            });
+
+            it('should show correct number after completing some tasks', async () => {
+                // Complete one task
+                await runCLI('complete 3.0'); // Complete the in_progress task
+
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).toMatch(/^2$/); // 2 pending tasks left
+            });
+
+            it('should not contain any text, only the number', async () => {
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).not.toContain('tasks');
+                expect(result.stdout.trim()).not.toContain('remaining');
+                expect(result.stdout.trim()).toMatch(/^\d+$/);
+            });
+        });
+
+        describe('Flag combinations and validation', () => {
+            it('should work with help flag', async () => {
+                const result = await runCLI('remaining --help');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout).toContain('Count incomplete tasks');
+                expect(result.stdout).toContain('--json');
+                expect(result.stdout).toContain('--count');
+            });
+
+            it('should handle both --json and --count flags (JSON takes precedence)', async () => {
+                const result = await runCLI('remaining --json --count');
+
+                expect(result.code).toBe(0);
+                
+                // Should output JSON since --json is processed first
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(typeof data.remaining).toBe('number');
+            });
+
+            it('should handle both --count and --json flags (JSON takes precedence)', async () => {
+                const result = await runCLI('remaining --count --json');
+
+                expect(result.code).toBe(0);
+                
+                // Should output JSON since --json is processed first
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(typeof data.remaining).toBe('number');
+            });
+        });
+
+        describe('Edge cases', () => {
+            it('should work with empty database', async () => {
+                // Create a fresh database with no tasks
+                if (existsSync(TEST_DB_PATH)) {
+                    unlinkSync(TEST_DB_PATH);
+                }
+                await runCLI('init');
+
+                const result = await runCLI('remaining');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout).toMatch(/0 tasks remaining/);
+            });
+
+            it('should work with empty database using --count', async () => {
+                // Create a fresh database with no tasks
+                if (existsSync(TEST_DB_PATH)) {
+                    unlinkSync(TEST_DB_PATH);
+                }
+                await runCLI('init');
+
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).toBe('0');
+            });
+
+            it('should work with empty database using --json', async () => {
+                // Create a fresh database with no tasks
+                if (existsSync(TEST_DB_PATH)) {
+                    unlinkSync(TEST_DB_PATH);
+                }
+                await runCLI('init');
+
+                const result = await runCLI('remaining --json');
+
+                expect(result.code).toBe(0);
+                
+                const data = JSON.parse(result.stdout);
+                expect(data).toHaveProperty('remaining');
+                expect(data.remaining).toBe(0);
+            });
+
+            it('should count only pending and in_progress tasks', async () => {
+                // Verify that cancelled tasks are not counted as remaining
+                const result = await runCLI('remaining --count');
+
+                expect(result.code).toBe(0);
+                expect(result.stdout.trim()).toBe('3'); // Should not count the cancelled task
+                
+                // Double-check with JSON output
+                const jsonResult = await runCLI('remaining --json');
+                const data = JSON.parse(jsonResult.stdout);
+                expect(data.remaining).toBe(3); // 2 pending + 1 in_progress, no cancelled
+            });
+        });
+
+        describe('Integration with task state changes', () => {
+            it('should update count when task status changes from pending to completed', async () => {
+                // Initial count
+                let result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+
+                // Complete a pending task
+                await runCLI('complete 1.0');
+
+                // Count should decrease
+                result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('2');
+            });
+
+            it('should update count when task status changes from pending to in_progress', async () => {
+                // Initial count
+                let result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+
+                // Change a pending task to in_progress
+                await runCLI('update 5.0 --status in_progress');
+
+                // Count should remain the same (still incomplete)
+                result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+            });
+
+            it('should update count when task status changes from in_progress to completed', async () => {
+                // Initial count
+                let result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+
+                // Complete the in_progress task
+                await runCLI('complete 3.0');
+
+                // Count should decrease
+                result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('2');
+            });
+
+            it('should update count when task is cancelled', async () => {
+                // Initial count
+                let result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+
+                // Cancel a pending task
+                await runCLI('update 1.0 --status cancelled');
+
+                // Count should decrease (cancelled tasks are not "remaining")
+                result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('2');
+            });
+
+            it('should update count when completed task is reopened', async () => {
+                // Complete a task first
+                await runCLI('complete 1.0');
+                
+                let result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('2');
+
+                // Reopen the completed task
+                await runCLI('update 1.0 --status pending');
+
+                // Count should increase
+                result = await runCLI('remaining --count');
+                expect(result.stdout.trim()).toBe('3');
+            });
+        });
+    });
 });
