@@ -205,8 +205,12 @@ todoq list --status completed    # Show completed tasks
 todoq list --parent 1.0         # Show subtasks of parent
 todoq list --no-subtasks        # Show only parent tasks
 todoq list --tree               # Show hierarchical tree view
-todoq list --json               # JSON output
+todoq list --json               # JSON output for programmatic use
 todoq list --format table       # Table format
+todoq list --detailed           # Show complete task information (all fields)
+todoq list --detailed --format table  # Comprehensive 11-column table view
+todoq list --detailed --tree    # Hierarchical view with all task details
+todoq list --json --status pending    # JSON output with status filtering
 ```
 
 ### JSON Import/Export
@@ -286,6 +290,54 @@ Provides a form-like interface to update:
 
 All interactive commands fall back to non-interactive mode if you provide the required options directly via command line flags.
 
+## Detailed Task Views
+
+TodoQ provides comprehensive task information display options for both human-readable and programmatic use:
+
+### Detailed Human-Readable Output
+
+```bash
+# Show all task fields in multi-line format
+todoq list --detailed
+
+# Comprehensive table with all 11 columns (Number, Name, Status, Priority, Description, Files, Dependencies, Docs, Testing, Notes, Created)
+todoq list --detailed --format table
+
+# Hierarchical tree view with complete task information
+todoq list --detailed --tree
+
+# Combine with filtering
+todoq list --detailed --status pending --parent 1.0
+```
+
+The `--detailed` flag shows complete task information including:
+- Task number, name, status, and priority
+- Full description and notes
+- Associated files and documentation references
+- Testing strategy and dependencies
+- Creation and update timestamps
+- Completion details (for finished tasks)
+
+### JSON Output for Automation
+
+```bash
+# Complete JSON export for all tasks
+todoq list --json
+
+# JSON output with filtering (great for scripts and automation)
+todoq list --json --status completed
+todoq list --json --parent 1.0 --no-subtasks
+
+# Combine JSON with detailed flag (includes all fields)
+todoq list --json --detailed
+```
+
+JSON output includes all task fields and is perfect for:
+- Automation and scripting
+- Integration with other tools
+- Programmatic task analysis
+- Backup and migration workflows
+
 ## CLI Commands
 
 | Command | Description | Example |
@@ -295,7 +347,7 @@ All interactive commands fall back to non-interactive mode if you provide the re
 | `import` | Import tasks from JSON | `todoq import tasks.json --skip-errors` |
 | `bulk-validate` | Validate JSON without importing | `todoq bulk-validate tasks.json` |
 | `export` | Export tasks to JSON | `todoq export --pretty --completed` |
-| `list` | List tasks with filtering options | `todoq list --tree --status pending` |
+| `list` | List tasks with filtering options | `todoq list --detailed --format table --status pending` |
 | `search` | Search tasks by query | `todoq search "setup"` |
 | `current` | Show current task or change its status | `todoq current --complete --notes "Done"` |
 | `next` | Show next task | `todoq next` |

@@ -14,6 +14,8 @@ export function registerListCommands(program: Command): void {
         .option('--tree', 'show hierarchical tree view')
         .option('--format <format>', 'output format (tree, list, table)', 'list')
         .option('--completed', 'include completed tasks')
+        .option('--detailed', 'show all task fields and complete information')
+        .option('--json', 'output as JSON')
         .action(async (options) => {
             const config = options._config as TodoqConfig;
             const taskService = options._taskService as TaskService;
@@ -44,7 +46,8 @@ export function registerListCommands(program: Command): void {
                     console.log(JSON.stringify(tasks, null, 2));
                 } else {
                     const format = options.tree ? 'tree' : (options.format || config.display.format);
-                    console.log(formatTaskList(tasks, config, format));
+                    const detailed = options.detailed || false;
+                    console.log(formatTaskList(tasks, config, format, detailed));
                 }
             } catch (error) {
                 throw error;

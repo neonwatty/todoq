@@ -70,35 +70,39 @@ export function formatTask(task: Task, config: TodoqConfig, options: FormatOptio
     return lines.join('\n');
 }
 
-export function formatTaskList(tasks: Task[], config: TodoqConfig, format: 'tree' | 'list' | 'table' = 'list'): string {
+export function formatTaskList(tasks: Task[], config: TodoqConfig, format: 'tree' | 'list' | 'table' = 'list', detailed: boolean = false): string {
     if (tasks.length === 0) {
         return chalk.yellow('No tasks found');
     }
     
     switch (format) {
         case 'tree':
-            return formatTaskTree(tasks, config);
+            return formatTaskTree(tasks, config, detailed);
         case 'table':
-            return formatTaskTable(tasks, config);
+            return formatTaskTable(tasks, config, detailed);
         case 'list':
         default:
-            return formatTaskListView(tasks, config);
+            return formatTaskListView(tasks, config, detailed);
     }
 }
 
-function formatTaskListView(tasks: Task[], config: TodoqConfig): string {
+function formatTaskListView(tasks: Task[], config: TodoqConfig, detailed: boolean = false): string {
     const lines: string[] = [];
     
     for (const task of tasks) {
-        lines.push(formatTask(task, config, { compact: true }));
+        if (detailed) {
+            lines.push(formatTask(task, config, { compact: false }));
+            lines.push(''); // Add spacing between detailed tasks
+        } else {
+            lines.push(formatTask(task, config, { compact: true }));
+        }
     }
     
     return lines.join('\n');
 }
 
-function formatTaskTree(tasks: Task[], config: TodoqConfig): string {
+function formatTaskTree(tasks: Task[], config: TodoqConfig, detailed: boolean = false): string {
     // Group tasks by hierarchy
-    const taskMap = new Map(tasks.map(t => [t.id!, t]));
     const rootTasks = tasks.filter(t => !t.parentId);
     const lines: string[] = [];
     
@@ -108,8 +112,16 @@ function formatTaskTree(tasks: Task[], config: TodoqConfig): string {
         const statusColor = getStatusColor(task.status);
         const priorityText = task.priority > 0 ? chalk.magenta(`[P${task.priority}]`) : '';
         
-        const line = `${indent}${statusColor(statusIcon)} ${task.taskNumber} ${task.name} ${priorityText}`;
-        lines.push(line);
+        if (detailed) {
+            // Show detailed info for each task in tree format
+            const taskDetails = formatTask(task, config, { compact: false });
+            const indentedDetails = taskDetails.split('\n').map(line => `${indent}${line}`).join('\n');
+            lines.push(indentedDetails);
+            if (level === 0) lines.push(''); // Add spacing between root tasks
+        } else {
+            const line = `${indent}${statusColor(statusIcon)} ${task.taskNumber} ${task.name} ${priorityText}`;
+            lines.push(line);
+        }
         
         // Find and render children
         const children = tasks.filter(t => t.parentId === task.id);
@@ -125,30 +137,58 @@ function formatTaskTree(tasks: Task[], config: TodoqConfig): string {
     return lines.join('\n');
 }
 
-function formatTaskTable(tasks: Task[], config: TodoqConfig): string {
+function formatTaskTable(tasks: Task[], config: TodoqConfig, detailed: boolean = false): string {
     // Use cli-table3 for table formatting
     
-    const table = new Table({
-        head: ['Number', 'Name', 'Status', 'Priority', 'Progress'],
-        colWidths: [10, 30, 12, 8, 10]
-    });
-    
-    for (const task of tasks) {
-        const statusColor = getStatusColor(task.status);
-        const progressText = task.completionPercentage !== undefined 
-            ? `${Math.round(task.completionPercentage)}%`
-            : task.status === 'completed' ? '100%' : '0%';
+    if (detailed) {
+        const table = new Table({
+            head: ['Number', 'Name', 'Status', 'Priority', 'Description', 'Files', 'Dependencies', 'Docs', 'Testing', 'Notes', 'Created'],
+            colWidths: [8, 20, 10, 6, 25, 15, 12, 15, 15, 15, 10]
+        });
+        
+        for (const task of tasks) {
+            const statusColor = getStatusColor(task.status);
+            const truncate = (str: string, len: number) => str && str.length > len ? `${str.substring(0, len-3)}...` : str || '';
             
-        table.push([
-            task.taskNumber,
-            task.name.length > 27 ? `${task.name.substring(0, 24)  }...` : task.name,
-            statusColor(task.status),
-            task.priority > 0 ? `P${task.priority}` : '',
-            progressText
-        ]);
+            table.push([
+                task.taskNumber,
+                truncate(task.name, 17),
+                statusColor(task.status),
+                task.priority > 0 ? `P${task.priority}` : '',
+                truncate(task.description || '', 22),
+                truncate((task.files || []).join(', '), 12),
+                truncate((task.dependencies || []).join(', '), 9),
+                truncate((task.docsReferences || []).join(', '), 12),
+                truncate(task.testingStrategy || '', 12),
+                truncate(task.notes || '', 12),
+                formatDate(task.createdAt)
+            ]);
+        }
+        
+        return table.toString();
+    } else {
+        const table = new Table({
+            head: ['Number', 'Name', 'Status', 'Priority', 'Progress'],
+            colWidths: [10, 30, 12, 8, 10]
+        });
+        
+        for (const task of tasks) {
+            const statusColor = getStatusColor(task.status);
+            const progressText = task.completionPercentage !== undefined 
+                ? `${Math.round(task.completionPercentage)}%`
+                : task.status === 'completed' ? '100%' : '0%';
+                
+            table.push([
+                task.taskNumber,
+                task.name.length > 27 ? `${task.name.substring(0, 24)  }...` : task.name,
+                statusColor(task.status),
+                task.priority > 0 ? `P${task.priority}` : '',
+                progressText
+            ]);
+        }
+        
+        return table.toString();
     }
-    
-    return table.toString();
 }
 
 export function formatStats(stats: TaskStats): string {

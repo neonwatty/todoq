@@ -43,6 +43,9 @@ todoq complete 1.0           # Mark task complete
 - `todoq current --start` - Mark current task as in progress
 - `todoq current --cancel` - Mark current task as cancelled
 - `todoq list --tree` - Show hierarchical view
+- `todoq list --detailed` - Show complete task information (all fields)
+- `todoq list --detailed --format table` - Comprehensive 11-column table
+- `todoq list --json` - JSON output for automation and scripting
 - `todoq show 1.0` - Show task details
 - `todoq search <query>` - Search tasks
 - `todoq remaining --count` - Count incomplete tasks (number only)
