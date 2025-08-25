@@ -2,10 +2,10 @@
 
 ## Context
 
-- Project directory: "$PROJECT_DIR" (optional, defaults to current directory for TFQ operations)
+- Project directory: "$PROJECT_DIR" (optional, defaults to current directory)
 
 ## Goal
-Help developers work on tasks with auto-fetched documentation context and implementation guidance.  Note: todoq must be initialized in the $PROJECT_DIR for this command to function properly.
+Help developers work on tasks with auto-fetched documentation context and implementation guidance.  Note: todoq AND tfq must be initialized in the $PROJECT_DIR for this command to function properly.
 
 ## Usage
 ```
@@ -17,8 +17,8 @@ Help developers work on tasks with auto-fetched documentation context and implem
 1. **Change Directory**: Navigate to $PROJECT_DIR (or repository root if not specified)
 
 2. **Task Discovery**
-   - Run `todoq current --json` to get the next uncompleted task in json form
-   - If the return value is not a number, return exactly: 'no more tasks'
+   - Run `todoq remaining --count`, if the count is 0 return 'no more tasks remaining'
+   - Else: Run `todoq current --json` to get the next uncompleted task in json form
    - Run `todoq current --start` to mark the task as `in_progress`
 
 3. **TodoWrite Initialization (Single-Threaded Execution)**
@@ -36,12 +36,12 @@ Help developers work on tasks with auto-fetched documentation context and implem
 
 5. **Testing & Validation Pipeline**
    - Determine proper unit and integration tests for implemented task
-   - Run project-specific testing commands (check CLAUDE.md for test commands)
+   - Run project-specific testing commands
    - Run linting/typecheck validation if available
    - Handle test failures by creating recovery todos, keep as task `in_progress`
 
 6. **Quality Assurance**
-   - Spawn validation agent via Task tool to independently review
+   - Spawn validation agent via Task tool to independently review and double check work
    - If validation fails: Create specific fix todos, maintain task as `in_progress`
 
 7. **Automated Test Fixing**
@@ -63,9 +63,9 @@ Help developers work on tasks with auto-fetched documentation context and implem
    - Update TodoWrite status based on test fixing results
 
 10. **Complete or Error Recovery**
-   - If the previous steps succeed: Mark all todos `completed`, mark todoq task complete as `todoq current --complete --force`
-   - On any failure: Preserve current state, create specific recovery todos
-   - Never mark task complete unless all validation passes
+   - If the previous steps succeed: Mark all todos `completed`,
+   - Run `tfq count`, if `0` run `todoq current --complete --force`
+   - Else: On any failure: Preserve current state, create specific recovery todos
    - Provide clear next steps for manual intervention if needed
 
 
