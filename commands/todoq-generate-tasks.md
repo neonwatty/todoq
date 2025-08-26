@@ -61,6 +61,8 @@ Generate hierarchical TodoQ tasks from a PRD using intelligent analysis and impo
    - **CHECKPOINT**: Verify step 6 completed in TodoWrite before proceeding
    - Use Task tool with general-purpose agent to create hierarchical parent/sub-tasks using TodoQ JSON schema
    - Agent should design optimal task breakdown, determine logical dependencies, predict affected files, assign realistic priorities
+   - **ATOMICITY VALIDATION**: Agent validates each task is atomic (single responsibility, 1-4 hours, independently testable) and breaks down complex tasks further
+   - **TEST & DOCUMENTATION DESIGN**: Agent designs unit and integration test strategies for each task, explores necessary documentation updates, and ensures testability requirements are captured
    - **USER PREVIEW**: Display task structure hierarchy for user review and approval
    - Allow iterative refinement of task structure based on user feedback
    - **COMPLETION**: Mark step 7 complete, start step 8
