@@ -81,39 +81,30 @@ Help developers work on tasks with auto-fetched documentation context and implem
 
 10. **Automated Test Fixing - Round 1**
     - **CHECKPOINT**: Verify step 9 completed in TodoWrite before proceeding
-    - If `$PROJECT_DIR` provided: Use Task tool to execute `/tfq:tfq-fix-all $PROJECT_DIR`
-    - Else: Use Task tool to execute `/tfq:tfq-fix-all` (runs in current directory)
+    - Use Task tool to execute `tfq fix-all` (runs in `$PROJECT_DIR` if provided)
     - Update TodoWrite with specific results from test fixing
     - **COMPLETION**: Mark step 10 complete, start step 11
 
 11. **Automated Test Fixing - Round 2**
     - **CHECKPOINT**: Verify step 10 completed in TodoWrite before proceeding
-    - If `$PROJECT_DIR` provided: Use Task tool to execute `/tfq:tfq-fix-all $PROJECT_DIR`
-    - Else: Use Task tool to execute `/tfq:tfq-fix-all` (runs in current directory)
+    - Use Task tool to execute `tfq fix-all` (runs in `$PROJECT_DIR` if provided)
     - Update TodoWrite with specific results from test fixing
     - **COMPLETION**: Mark step 11 complete, start step 12
 
-12. **Automated Test Fixing - Round 3**
-    - **CHECKPOINT**: Verify step 11 completed in TodoWrite before proceeding
-    - If `$PROJECT_DIR` provided: Use Task tool to execute `/tfq:tfq-fix-all $PROJECT_DIR`
-    - Else: Use Task tool to execute `/tfq:tfq-fix-all` (runs in current directory)
-    - Update TodoWrite with specific results from test fixing
-    - **COMPLETION**: Mark step 12 complete, start step 13
-
-13. **Phase 3 Checkpoint - Testing Complete**
-    - **MANDATORY VALIDATION**: Verify TodoWrite shows steps 1-12 as completed
+12. **Phase 3 Checkpoint - Testing Complete**
+    - **MANDATORY VALIDATION**: Verify TodoWrite shows steps 1-11 as completed
     - Use Bash tool to run `tfq count` to verify no remaining test failures
     - Run final comprehensive test suite to ensure everything works
     - If ANY tests still failing: Create specific recovery todos and STOP
-    - **COMPLETION**: Mark step 13 complete, start step 14
+    - **COMPLETION**: Mark step 12 complete, start step 13
 
-14. **Task Completion & Final Validation**
-    - **CHECKPOINT**: Verify step 13 completed in TodoWrite before proceeding
+13. **Task Completion & Final Validation**
+    - **CHECKPOINT**: Verify step 12 completed in TodoWrite before proceeding
     - **FINAL VALIDATION**: Verify ALL TodoWrite steps 1-13 marked as completed
     - Use Bash tool to run `tfq count`, if result is `0`: Use Bash tool to run `todoq current --complete --force`
     - If `tfq count` > 0: Create recovery todo "Resolve remaining test failures" and STOP
     - Use Bash tool to run `todoq current --json` to verify task marked as completed
-    - **COMPLETION**: Mark step 14 complete - EXECUTION FINISHED
+    - **COMPLETION**: Mark step 13 complete - EXECUTION FINISHED
 
 ## Error Recovery Pattern (Applied to ALL Steps)
 
