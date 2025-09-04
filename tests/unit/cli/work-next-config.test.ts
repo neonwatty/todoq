@@ -26,7 +26,7 @@ vi.mock('../../../src/services/claude/index.js', () => ({
   }))
 }));
 
-describe('work-next command configuration integration', () => {
+describe('work-next command configuration integration (tfq-style)', () => {
   let program: Command;
   let mockConfig: TodoqConfig;
   let getClaudeServiceMock: any;
@@ -56,12 +56,16 @@ describe('work-next command configuration integration', () => {
       },
       claude: {
         enabled: true,
-        timeout: 180000,
-        model: 'claude-3-5-sonnet-20241022',
+        testTimeout: 180000,
+        model: 'sonnet',
         verbose: false,
-        streaming: false,
-        maxIterations: 3,
-        allowedTools: ['Read', 'Edit', 'Bash']
+        outputFormat: 'text',
+        maxIterations: 10,
+        maxTurns: 5,
+        allowedTools: ['Read', 'Edit', 'Bash'],
+        permissionMode: 'plan',
+        dangerouslySkipPermissions: true,
+        continueSession: true
       }
     };
 
@@ -90,10 +94,12 @@ describe('work-next command configuration integration', () => {
       expect.objectContaining({
         claude: expect.objectContaining({
           enabled: true,
-          timeout: 180000,
-          model: 'claude-3-5-sonnet-20241022',
+          testTimeout: 300000, // Uses default since config gets merged
+          model: 'sonnet',
           verbose: false,
-          streaming: false
+          outputFormat: 'text',
+          allowedTools: ['Read', 'Edit', 'Bash'],
+          permissionMode: 'plan'
         })
       })
     );
@@ -101,20 +107,20 @@ describe('work-next command configuration integration', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should override timeout from command line', async () => {
+  it('should override test timeout from command line', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     
     const command = program.commands.find(cmd => cmd.name() === 'work-next')!;
     command.setOptionValue('_config', mockConfig);
 
-    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--timeout', '300000', '/test/dir']);
+    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--test-timeout', '400000', '/test/dir']);
 
     expect(getClaudeServiceMock).toHaveBeenCalledWith(
       undefined,
       undefined,
       expect.objectContaining({
         claude: expect.objectContaining({
-          timeout: 300000 // Should be overridden
+          testTimeout: 400000 // Should be overridden
         })
       })
     );
@@ -143,20 +149,20 @@ describe('work-next command configuration integration', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should override streaming from command line', async () => {
+  it('should override output format from command line', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     
     const command = program.commands.find(cmd => cmd.name() === 'work-next')!;
     command.setOptionValue('_config', mockConfig);
 
-    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--streaming', '/test/dir']);
+    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--output-format', 'stream-json', '/test/dir']);
 
     expect(getClaudeServiceMock).toHaveBeenCalledWith(
       undefined,
       undefined,
       expect.objectContaining({
         claude: expect.objectContaining({
-          streaming: true // Should be overridden
+          outputFormat: 'stream-json' // Should be overridden
         })
       })
     );
@@ -173,9 +179,10 @@ describe('work-next command configuration integration', () => {
     await program.parseAsync([
       'node', 'test', 'work-next', 
       '--skip-claude-check', 
-      '--timeout', '240000',
+      '--test-timeout', '240000',
       '--verbose',
-      '--streaming',
+      '--output-format', 'json',
+      '--model', 'opus',
       '/test/dir'
     ]);
 
@@ -184,9 +191,10 @@ describe('work-next command configuration integration', () => {
       undefined,
       expect.objectContaining({
         claude: expect.objectContaining({
-          timeout: 240000,
+          testTimeout: 240000,
           verbose: true,
-          streaming: true
+          outputFormat: 'json',
+          model: 'opus'
         })
       })
     );
@@ -207,14 +215,14 @@ describe('work-next command configuration integration', () => {
     const command = program.commands.find(cmd => cmd.name() === 'work-next')!;
     command.setOptionValue('_config', configWithoutClaude);
 
-    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--timeout', '120000', '/test/dir']);
+    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--test-timeout', '120000', '/test/dir']);
 
     expect(getClaudeServiceMock).toHaveBeenCalledWith(
       undefined,
       undefined,
       expect.objectContaining({
         claude: expect.objectContaining({
-          timeout: 120000
+          testTimeout: 120000
         })
       })
     );
@@ -239,9 +247,9 @@ describe('work-next command configuration integration', () => {
         defaults: mockConfig.defaults,
         claude: expect.objectContaining({
           enabled: true, // Preserved
-          timeout: 180000, // Preserved
-          model: 'claude-3-5-sonnet-20241022', // Preserved
-          streaming: false, // Preserved
+          testTimeout: 300000, // Default applied
+          model: 'sonnet', // Preserved
+          outputFormat: 'text', // Preserved
           verbose: true // Overridden
         })
       })

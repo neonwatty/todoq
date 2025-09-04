@@ -1,5 +1,5 @@
 /**
- * Configuration interface for Claude service
+ * Configuration interface for Claude service (matching tfq structure)
  */
 export interface ClaudeConfig {
   /** Whether Claude integration is enabled */
@@ -8,19 +8,37 @@ export interface ClaudeConfig {
   claudePath?: string;
   /** Maximum iterations for Claude execution */
   maxIterations?: number;
-  /** Timeout in milliseconds for Claude execution */
-  timeout?: number;
-  /** Claude model to use */
-  model?: string;
-  /** Enable verbose output */
-  verbose?: boolean;
-  /** Enable streaming output */
-  streaming?: boolean;
-  /** Custom prompt template */
-  prompt?: string;
-  /** Allowed tools for Claude */
+  /** Test timeout in milliseconds (1-10 minutes: 60000-600000ms) */
+  testTimeout?: number;
+  
+  // Security & Permissions
+  /** Skip permission prompts (dev mode) */
+  dangerouslySkipPermissions?: boolean;
+  /** Allowed tools without prompts */
   allowedTools?: string[];
-  /** Custom CLI arguments */
+  /** Explicitly denied tools */
+  disallowedTools?: string[];
+  /** Permission handling mode */
+  permissionMode?: 'plan' | 'ask' | 'auto';
+  
+  // Output & Behavior  
+  /** Output format */
+  outputFormat?: 'text' | 'json' | 'stream-json';
+  /** Enable detailed logging */
+  verbose?: boolean;
+  /** Limit conversation turns */
+  maxTurns?: number;
+  /** Claude model (sonnet|opus|full-model-name) */
+  model?: string;
+  
+  // Advanced Options
+  /** Additional working directories */
+  addDir?: string[];
+  /** Append to system prompt */
+  appendSystemPrompt?: string;
+  /** Resume most recent conversation */
+  continueSession?: boolean;
+  /** Any additional CLI arguments */
   customArgs?: string[];
 }
 

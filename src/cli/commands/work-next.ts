@@ -8,36 +8,54 @@ export function registerWorkNextCommands(program: Command): void {
     .command('work-next')
     .description('Work on next task using Claude')
     .argument('[directory]', 'project directory', process.cwd())
-    .option('--timeout <ms>', 'execution timeout in milliseconds', '180000')
-    .option('--verbose', 'enable verbose output')
-    .option('--streaming', 'enable streaming output')
+    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-600000)', '300000')
+    .option('--max-iterations <num>', 'maximum Claude iterations (1-50)', '10')
+    .option('--max-turns <num>', 'maximum conversation turns (1-100)', '5')
+    .option('--model <model>', 'Claude model (sonnet|opus|full-model-name)', 'sonnet')
+    .option('--output-format <format>', 'output format (text|json|stream-json)', 'text')
+    .option('--permission-mode <mode>', 'permission handling (plan|ask|auto)', 'plan')
+    .option('--verbose', 'enable detailed logging')
+    .option('--dangerously-skip-permissions', 'skip permission prompts (dev mode)')
+    .option('--continue-session', 'resume most recent conversation')
     .option('--skip-claude-check', 'skip Claude availability check')
     .action(async (directory, options) => {
       try {
         // Get configuration from command context
         const config = options._config as TodoqConfig;
         
-        // Apply command-line options to configuration override
+        // Apply command-line options to configuration override (tfq-style)
         const claudeConfigOverride = { ...config };
-        if (options.timeout) {
-          if (!claudeConfigOverride.claude) {
-            claudeConfigOverride.claude = {} as any;
-          }
-          claudeConfigOverride.claude.timeout = parseInt(options.timeout);
+        if (!claudeConfigOverride.claude) {
+          claudeConfigOverride.claude = {} as any;
         }
-        
+
+        // Apply tfq-style command line options
+        if (options.testTimeout) {
+          claudeConfigOverride.claude.testTimeout = parseInt(options.testTimeout);
+        }
+        if (options.maxIterations) {
+          claudeConfigOverride.claude.maxIterations = parseInt(options.maxIterations);
+        }
+        if (options.maxTurns) {
+          claudeConfigOverride.claude.maxTurns = parseInt(options.maxTurns);
+        }
+        if (options.model) {
+          claudeConfigOverride.claude.model = options.model;
+        }
+        if (options.outputFormat) {
+          claudeConfigOverride.claude.outputFormat = options.outputFormat;
+        }
+        if (options.permissionMode) {
+          claudeConfigOverride.claude.permissionMode = options.permissionMode;
+        }
         if (options.verbose) {
-          if (!claudeConfigOverride.claude) {
-            claudeConfigOverride.claude = {} as any;
-          }
           claudeConfigOverride.claude.verbose = true;
         }
-        
-        if (options.streaming) {
-          if (!claudeConfigOverride.claude) {
-            claudeConfigOverride.claude = {} as any;
-          }
-          claudeConfigOverride.claude.streaming = true;
+        if (options.dangerouslySkipPermissions) {
+          claudeConfigOverride.claude.dangerouslySkipPermissions = true;
+        }
+        if (options.continueSession) {
+          claudeConfigOverride.claude.continueSession = true;
         }
         
         // Get Claude service instance with configuration

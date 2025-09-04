@@ -17,36 +17,78 @@ export class ClaudeConfigManager {
   }
 
   /**
-   * Get default configuration values
+   * Get default configuration values (matching tfq defaults)
    */
   private getDefaults(): ClaudeConfig {
     return {
       enabled: false,
-      maxIterations: 3,
-      timeout: 180000, // 3 minutes
-      model: 'claude-3-5-sonnet-20241022',
-      verbose: false,
-      streaming: false,
-      prompt: '',
-      allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+      maxIterations: 10,
+      testTimeout: 300000, // 5 minutes (300000ms within 1-10 min range)
+      
+      // Security & Permissions
+      dangerouslySkipPermissions: true,
+      allowedTools: ['Edit', 'Read', 'Write'],
+      disallowedTools: ['Bash'],
+      permissionMode: 'plan',
+      
+      // Output & Behavior  
+      outputFormat: 'text',
+      verbose: true,
+      maxTurns: 5,
+      model: 'sonnet',
+      
+      // Advanced Options
+      addDir: [],
+      appendSystemPrompt: '',
+      continueSession: true,
       customArgs: []
     };
   }
 
   /**
-   * Validate configuration values
+   * Validate configuration values (matching tfq validation)
    */
   private validateConfig(): void {
-    if (this.config.timeout && this.config.timeout < 1000) {
-      this.config.timeout = 1000; // Minimum 1 second
+    // Validate testTimeout (1-10 minutes: 60000-600000ms)
+    if (this.config.testTimeout !== undefined) {
+      if (this.config.testTimeout < 60000) {
+        this.config.testTimeout = 60000; // Minimum 1 minute
+      }
+      if (this.config.testTimeout > 600000) {
+        this.config.testTimeout = 600000; // Maximum 10 minutes
+      }
     }
     
+    // Validate maxIterations
     if (this.config.maxIterations !== undefined && this.config.maxIterations < 1) {
       this.config.maxIterations = 1; // Minimum 1 iteration
     }
     
-    if (this.config.maxIterations !== undefined && this.config.maxIterations > 10) {
-      this.config.maxIterations = 10; // Maximum 10 iterations
+    if (this.config.maxIterations !== undefined && this.config.maxIterations > 50) {
+      this.config.maxIterations = 50; // Maximum 50 iterations
+    }
+    
+    // Validate maxTurns
+    if (this.config.maxTurns !== undefined && this.config.maxTurns < 1) {
+      this.config.maxTurns = 1; // Minimum 1 turn
+    }
+    
+    if (this.config.maxTurns !== undefined && this.config.maxTurns > 100) {
+      this.config.maxTurns = 100; // Maximum 100 turns
+    }
+    
+    // Ensure arrays are initialized
+    if (!this.config.allowedTools) {
+      this.config.allowedTools = [];
+    }
+    if (!this.config.disallowedTools) {
+      this.config.disallowedTools = [];
+    }
+    if (!this.config.addDir) {
+      this.config.addDir = [];
+    }
+    if (!this.config.customArgs) {
+      this.config.customArgs = [];
     }
   }
 
@@ -92,28 +134,65 @@ export class ClaudeConfigManager {
   }
 
   /**
-   * Build CLI arguments for Claude execution
+   * Build CLI arguments for Claude execution (tfq-style)
    */
   buildCliArguments(): string[] {
     const args: string[] = [];
 
-    // Add model if specified
+    // Model
     if (this.config.model) {
       args.push('--model', this.config.model);
     }
 
-    // Add allowed tools
+    // Security & Permissions
+    if (this.config.dangerouslySkipPermissions) {
+      args.push('--dangerously-skip-permissions');
+    }
+
     if (this.config.allowedTools && this.config.allowedTools.length > 0) {
       args.push('--allowed-tools', this.config.allowedTools.join(','));
     }
 
-    // Add custom arguments
+    if (this.config.disallowedTools && this.config.disallowedTools.length > 0) {
+      args.push('--disallowed-tools', this.config.disallowedTools.join(','));
+    }
+
+    if (this.config.permissionMode) {
+      args.push('--permission-mode', this.config.permissionMode);
+    }
+
+    // Output & Behavior
+    if (this.config.outputFormat) {
+      args.push('--output-format', this.config.outputFormat);
+    }
+
+    if (this.config.verbose) {
+      args.push('--verbose');
+    }
+
+    if (this.config.maxTurns !== undefined) {
+      args.push('--max-turns', this.config.maxTurns.toString());
+    }
+
+    // Advanced Options
+    if (this.config.addDir && this.config.addDir.length > 0) {
+      this.config.addDir.forEach(dir => {
+        args.push('--add-dir', dir);
+      });
+    }
+
+    if (this.config.appendSystemPrompt) {
+      args.push('--append-system-prompt', this.config.appendSystemPrompt);
+    }
+
+    if (this.config.continueSession) {
+      args.push('--continue-session');
+    }
+
+    // Custom arguments
     if (this.config.customArgs && this.config.customArgs.length > 0) {
       args.push(...this.config.customArgs);
     }
-
-    // Add safety flags
-    args.push('--dangerously-skip-permissions');
 
     return args;
   }
@@ -130,10 +209,10 @@ export class ClaudeConfigManager {
   }
 
   /**
-   * Get timeout value
+   * Get timeout value (using testTimeout for tfq compatibility)
    */
   getTimeout(): number {
-    return this.config.timeout || 180000;
+    return this.config.testTimeout || 300000; // Default 5 minutes
   }
 
   /**
@@ -144,17 +223,17 @@ export class ClaudeConfigManager {
   }
 
   /**
-   * Check if streaming is enabled
+   * Check if streaming is enabled (based on outputFormat)
    */
   isStreaming(): boolean {
-    return this.config.streaming || false;
+    return this.config.outputFormat === 'stream-json';
   }
 
   /**
    * Get model name
    */
   getModel(): string {
-    return this.config.model || 'claude-3-5-sonnet-20241022';
+    return this.config.model || 'sonnet';
   }
 
   /**
