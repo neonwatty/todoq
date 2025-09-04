@@ -41,11 +41,11 @@ export class ClaudeConfigManager {
       this.config.timeout = 1000; // Minimum 1 second
     }
     
-    if (this.config.maxIterations && this.config.maxIterations < 1) {
+    if (this.config.maxIterations !== undefined && this.config.maxIterations < 1) {
       this.config.maxIterations = 1; // Minimum 1 iteration
     }
     
-    if (this.config.maxIterations && this.config.maxIterations > 10) {
+    if (this.config.maxIterations !== undefined && this.config.maxIterations > 10) {
       this.config.maxIterations = 10; // Maximum 10 iterations
     }
   }
