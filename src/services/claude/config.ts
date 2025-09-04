@@ -24,7 +24,7 @@ export class ClaudeConfigManager {
       enabled: false,
       maxIterations: 3,
       timeout: 180000, // 3 minutes
-      model: 'sonnet-4',
+      model: 'claude-3-5-sonnet-20241022',
       verbose: false,
       streaming: false,
       prompt: '',
@@ -154,7 +154,7 @@ export class ClaudeConfigManager {
    * Get model name
    */
   getModel(): string {
-    return this.config.model || 'sonnet-4';
+    return this.config.model || 'claude-3-5-sonnet-20241022';
   }
 
   /**

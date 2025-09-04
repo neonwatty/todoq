@@ -13,7 +13,7 @@ await build({
   target: 'node22',
   outfile: 'dist/cli/index.js',
   format: 'esm',
-  external: ['better-sqlite3', 'inquirer', 'chalk', 'ora', 'cli-table3', 'cosmiconfig', 'zod', 'commander', 'fs', 'path', 'os']
+  external: ['better-sqlite3', 'inquirer', 'chalk', 'ora', 'cli-table3', 'cosmiconfig', 'zod', 'commander', 'execa', 'fs', 'path', 'os']
 });
 
 // Generate TypeScript declarations using tsc

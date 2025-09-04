@@ -23,7 +23,7 @@ export function getDefaultConfig(): TodoqConfig {
             enabled: false,
             maxIterations: 3,
             timeout: 180000, // 3 minutes
-            model: 'sonnet-4',
+            model: 'claude-3-5-sonnet-20241022',
             verbose: false,
             streaming: false,
             allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
@@ -220,7 +220,7 @@ export class ConfigManager {
     }
 
     public getClaudeModel(): string {
-        return this.config.claude?.model || 'sonnet-4';
+        return this.config.claude?.model || 'claude-3-5-sonnet-20241022';
     }
 
     public isClaudeVerbose(): boolean {

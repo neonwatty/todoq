@@ -17,8 +17,31 @@ export function registerWorkNextCommands(program: Command): void {
         // Get configuration from command context
         const config = options._config as TodoqConfig;
         
+        // Apply command-line options to configuration override
+        const claudeConfigOverride = { ...config };
+        if (options.timeout) {
+          if (!claudeConfigOverride.claude) {
+            claudeConfigOverride.claude = {} as any;
+          }
+          claudeConfigOverride.claude.timeout = parseInt(options.timeout);
+        }
+        
+        if (options.verbose) {
+          if (!claudeConfigOverride.claude) {
+            claudeConfigOverride.claude = {} as any;
+          }
+          claudeConfigOverride.claude.verbose = true;
+        }
+        
+        if (options.streaming) {
+          if (!claudeConfigOverride.claude) {
+            claudeConfigOverride.claude = {} as any;
+          }
+          claudeConfigOverride.claude.streaming = true;
+        }
+        
         // Get Claude service instance with configuration
-        const claudeService = getClaudeService(undefined, undefined, config);
+        const claudeService = getClaudeService(undefined, undefined, claudeConfigOverride);
         
         // Check Claude availability unless skipped
         if (!options.skipClaudeCheck) {

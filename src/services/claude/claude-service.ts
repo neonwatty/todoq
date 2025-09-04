@@ -1,5 +1,7 @@
 import { execa } from 'execa';
 import path from 'path';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 import { ClaudeConfigManager } from './config.js';
 import type { ClaudeConfig, WorkTaskResult, TaskContext } from './types.js';
 import type { TodoqConfig } from '../../core/types.js';
@@ -36,6 +38,32 @@ export class ClaudeService {
   }
 
   /**
+   * Find the TodoQ repository root directory
+   */
+  private findRepoRoot(): string {
+    try {
+      // Get current file path and go up to repo root
+      const currentFile = fileURLToPath(import.meta.url);
+      // From dist/cli/index.js (bundled) go up 2 levels to repo root
+      // From src/services/claude/claude-service.ts go up 3 levels to repo root  
+      const levels = currentFile.includes('dist/cli') ? '../..' : '../../..';
+      const repoRoot = path.resolve(path.dirname(currentFile), levels);
+      
+      // Debug logging (only in development)
+      if (process.env.DEBUG && process.env.NODE_ENV !== 'production') {
+        console.log('Current file:', currentFile);
+        console.log('Going up levels:', levels);
+        console.log('Repo root:', repoRoot);
+      }
+      
+      return repoRoot;
+    } catch {
+      // Fallback to current working directory
+      return process.cwd();
+    }
+  }
+
+  /**
    * Check if Claude is available in the system
    */
   async isAvailable(): Promise<boolean> {
@@ -52,18 +80,38 @@ export class ClaudeService {
    * Execute steps 1-3: Get next task via todoq CLI calls
    */
   async executeTodoqGetNext(projectDir: string): Promise<TaskContext> {
-    // Get todoq CLI path - use dev version for now due to bundling issues
-    const todoqPath = path.join(process.cwd(), 'src', 'cli', 'index.ts');
+    // Determine todoq CLI path based on environment
+    const repoRoot = this.findRepoRoot();
+    const isDevelopment = process.env.NODE_ENV !== 'production' && process.argv[1]?.includes('tsx');
+    
+    let todoqPath: string;
+    let execCommand: string;
+    let execArgs: string[];
+    
+    if (isDevelopment) {
+      todoqPath = path.join(repoRoot, 'src', 'cli', 'index.ts');
+      execCommand = 'npx';
+      execArgs = ['tsx', todoqPath];
+    } else {
+      todoqPath = path.join(repoRoot, 'dist', 'cli', 'index.js');
+      execCommand = 'node';
+      execArgs = [todoqPath];
+    }
+    
+    // Verify the CLI exists
+    if (!existsSync(todoqPath)) {
+      throw new Error(`TodoQ CLI not found at ${todoqPath}. Please rebuild the project.`);
+    }
     
     try {
       // Step 2: Directory setup & validation (todoq init)
-      await execa('npx', ['tsx', todoqPath, 'init'], { 
+      await execa(execCommand, [...execArgs, 'init'], { 
         cwd: projectDir,
         timeout: 30000 
       });
 
       // Step 3: Task discovery & status update
-      const countResult = await execa('npx', ['tsx', todoqPath, 'remaining', '--count'], { 
+      const countResult = await execa(execCommand, [...execArgs, 'remaining', '--count'], { 
         cwd: projectDir,
         timeout: 10000 
       });
@@ -75,7 +123,7 @@ export class ClaudeService {
       }
 
       // Get current task JSON
-      const taskResult = await execa('npx', ['tsx', todoqPath, 'current', '--json'], { 
+      const taskResult = await execa(execCommand, [...execArgs, 'current', '--json'], { 
         cwd: projectDir,
         timeout: 10000 
       });
@@ -83,7 +131,7 @@ export class ClaudeService {
       const taskJson = JSON.parse(taskResult.stdout);
 
       // Mark task as in progress
-      await execa('npx', ['tsx', todoqPath, 'current', '--start'], { 
+      await execa(execCommand, [...execArgs, 'current', '--start'], { 
         cwd: projectDir,
         timeout: 10000 
       });
@@ -94,8 +142,33 @@ export class ClaudeService {
         remainingCount
       };
     } catch (error) {
-      const err = error as Error;
-      throw new Error(`Failed to get next task: ${err.message}`);
+      const err = error as any;
+      
+      // Provide specific error messages for common issues
+      if (err.stderr?.includes('Database not initialized') || err.message?.includes('ENOENT')) {
+        throw new Error(
+          `TodoQ database not found in ${projectDir}. ` +
+          `Please run 'todoq init' in the project directory first.`
+        );
+      }
+      
+      if (err.stderr?.includes('No remaining tasks') || err.stdout?.trim() === '0') {
+        throw new Error(
+          `No remaining tasks found in ${projectDir}. ` +
+          `Add tasks using 'todoq import' or 'todoq insert' first.`
+        );
+      }
+      
+      if (err.code === 'ETIMEDOUT') {
+        throw new Error(
+          `Timeout while communicating with todoq CLI. ` +
+          `Please check if the database is accessible.`
+        );
+      }
+      
+      // Generic error with more context
+      const errorDetails = err.stderr || err.stdout || err.message || 'Unknown error';
+      throw new Error(`Failed to get next task from ${projectDir}: ${errorDetails}`);
     }
   }
 
