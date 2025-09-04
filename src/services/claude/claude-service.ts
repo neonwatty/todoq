@@ -2,6 +2,7 @@ import { execa } from 'execa';
 import path from 'path';
 import { ClaudeConfigManager } from './config.js';
 import type { ClaudeConfig, WorkTaskResult, TaskContext } from './types.js';
+import type { TodoqConfig } from '../../core/types.js';
 
 /**
  * Claude service for executing todoq work-next tasks
@@ -9,15 +10,28 @@ import type { ClaudeConfig, WorkTaskResult, TaskContext } from './types.js';
 export class ClaudeService {
   private configManager: ClaudeConfigManager;
 
-  constructor(configPath?: string, overrideClaudePath?: string) {
-    // Initialize configuration
-    const config: Partial<ClaudeConfig> = {};
+  constructor(configPath?: string, overrideClaudePath?: string, todoqConfig?: TodoqConfig) {
+    // Initialize configuration from TodoqConfig if provided
+    let config: Partial<ClaudeConfig> = {};
+    
+    if (todoqConfig?.claude) {
+      config = {
+        enabled: todoqConfig.claude.enabled,
+        claudePath: todoqConfig.claude.claudePath,
+        maxIterations: todoqConfig.claude.maxIterations,
+        timeout: todoqConfig.claude.timeout,
+        model: todoqConfig.claude.model,
+        verbose: todoqConfig.claude.verbose,
+        streaming: todoqConfig.claude.streaming,
+        allowedTools: todoqConfig.claude.allowedTools,
+        customArgs: todoqConfig.claude.customArgs
+      };
+    }
     
     if (overrideClaudePath) {
       config.claudePath = overrideClaudePath;
     }
 
-    // TODO: Load config from configPath when configuration integration is complete
     this.configManager = new ClaudeConfigManager(config);
   }
 
@@ -244,9 +258,9 @@ let instance: ClaudeService | null = null;
 /**
  * Get Claude service instance (singleton pattern)
  */
-export function getClaudeService(configPath?: string, overridePath?: string): ClaudeService {
-  if (!instance || configPath || overridePath) {
-    instance = new ClaudeService(configPath, overridePath);
+export function getClaudeService(configPath?: string, overridePath?: string, todoqConfig?: TodoqConfig): ClaudeService {
+  if (!instance || configPath || overridePath || todoqConfig) {
+    instance = new ClaudeService(configPath, overridePath, todoqConfig);
   }
   return instance;
 }

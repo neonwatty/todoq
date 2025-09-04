@@ -18,6 +18,16 @@ export function getDefaultConfig(): TodoqConfig {
         defaults: {
             status: 'pending',
             priority: 0
+        },
+        claude: {
+            enabled: false,
+            maxIterations: 3,
+            timeout: 180000, // 3 minutes
+            model: 'sonnet-4',
+            verbose: false,
+            streaming: false,
+            allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+            customArgs: []
         }
     };
 }
@@ -73,7 +83,21 @@ export function validateConfig(config: any): config is TodoqConfig {
         ['pending', 'in_progress', 'completed', 'cancelled'].includes(config.defaults.status) &&
         typeof config.defaults.priority === 'number');
 
-    return hasValidDatabase && hasValidDisplay && hasValidDefaults;
+    // Claude config is optional, but if present, validate it
+    const hasValidClaude = !config.claude || (
+        typeof config.claude === 'object' &&
+        typeof config.claude.enabled === 'boolean' &&
+        (!config.claude.claudePath || typeof config.claude.claudePath === 'string') &&
+        (!config.claude.maxIterations || (typeof config.claude.maxIterations === 'number' && config.claude.maxIterations > 0)) &&
+        (!config.claude.timeout || (typeof config.claude.timeout === 'number' && config.claude.timeout > 0)) &&
+        (!config.claude.model || typeof config.claude.model === 'string') &&
+        (!config.claude.verbose || typeof config.claude.verbose === 'boolean') &&
+        (!config.claude.streaming || typeof config.claude.streaming === 'boolean') &&
+        (!config.claude.allowedTools || Array.isArray(config.claude.allowedTools)) &&
+        (!config.claude.customArgs || Array.isArray(config.claude.customArgs))
+    );
+
+    return hasValidDatabase && hasValidDisplay && hasValidDefaults && hasValidClaude;
 }
 
 function deepMerge(target: any, source: any): any {
@@ -163,5 +187,55 @@ export class ConfigManager {
 
     public getDefaultPriority(): number {
         return this.config.defaults.priority;
+    }
+
+    // Claude configuration methods
+    public getClaudeConfig(): NonNullable<TodoqConfig['claude']> {
+        return this.config.claude || {
+            enabled: false,
+            maxIterations: 3,
+            timeout: 180000,
+            model: 'sonnet-4',
+            verbose: false,
+            streaming: false,
+            allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+            customArgs: []
+        };
+    }
+
+    public isClaudeEnabled(): boolean {
+        return this.config.claude?.enabled || false;
+    }
+
+    public getClaudePath(): string | undefined {
+        return this.config.claude?.claudePath;
+    }
+
+    public getClaudeMaxIterations(): number {
+        return this.config.claude?.maxIterations || 3;
+    }
+
+    public getClaudeTimeout(): number {
+        return this.config.claude?.timeout || 180000;
+    }
+
+    public getClaudeModel(): string {
+        return this.config.claude?.model || 'sonnet-4';
+    }
+
+    public isClaudeVerbose(): boolean {
+        return this.config.claude?.verbose || false;
+    }
+
+    public isClaudeStreaming(): boolean {
+        return this.config.claude?.streaming || false;
+    }
+
+    public getClaudeAllowedTools(): string[] {
+        return this.config.claude?.allowedTools || ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'];
+    }
+
+    public getClaudeCustomArgs(): string[] {
+        return this.config.claude?.customArgs || [];
     }
 }

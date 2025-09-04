@@ -55,6 +55,17 @@ export interface TodoqConfig {
         status: TaskStatus;
         priority: number;
     };
+    claude?: {
+        enabled: boolean;
+        claudePath?: string;
+        maxIterations?: number;
+        timeout?: number;
+        model?: string;
+        verbose?: boolean;
+        streaming?: boolean;
+        allowedTools?: string[];
+        customArgs?: string[];
+    };
 }
 
 export interface OperationResult<T> {

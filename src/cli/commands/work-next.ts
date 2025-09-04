@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { getClaudeService } from '../../services/claude/index.js';
+import type { TodoqConfig } from '../../core/types.js';
 
 export function registerWorkNextCommands(program: Command): void {
   program
@@ -13,8 +14,11 @@ export function registerWorkNextCommands(program: Command): void {
     .option('--skip-claude-check', 'skip Claude availability check')
     .action(async (directory, options) => {
       try {
-        // Get Claude service instance
-        const claudeService = getClaudeService();
+        // Get configuration from command context
+        const config = options._config as TodoqConfig;
+        
+        // Get Claude service instance with configuration
+        const claudeService = getClaudeService(undefined, undefined, config);
         
         // Check Claude availability unless skipped
         if (!options.skipClaudeCheck) {
