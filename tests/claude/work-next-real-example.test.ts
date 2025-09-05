@@ -231,40 +231,45 @@ describe('work-next real example integration', () => {
       tasks: [
         {
           number: '1.0',
-          name: 'Solve world hunger',
-          description: 'Fix all global food distribution issues',
+          name: 'Write a simple hello world function',
+          description: 'Create a function that returns hello world',
           status: 'pending',
           priority: 1,
-          files: [],
+          files: ['hello.js'],
           docs_references: [],
-          testing_strategy: 'Unknown'
+          testing_strategy: 'Basic test'
         }
       ]
     };
 
-    const tasksFile = path.join(testDir, 'difficult-tasks.json');
+    const tasksFile = path.join(testDir, 'simple-tasks.json');
     writeFileSync(tasksFile, JSON.stringify(difficultTask, null, 2));
 
     // Import tasks
-    await runCliInDir(testDir, 'import difficult-tasks.json');
+    await runCliInDir(testDir, 'import simple-tasks.json');
 
-    // Try work-next with a 1 minute timeout - expect it to handle the situation gracefully
+    // Try work-next with a short timeout to test graceful timeout handling
     const workNextResult = await runCliInDir(
       testDir, 
-      'work-next --verbose --test-timeout 60000',
+      'work-next --test-timeout 5000', // Very short timeout to test timeout behavior
       { 
         expectError: true, // May fail or timeout - both are valid outcomes
-        timeout: 120000
+        timeout: 30000 // Give it more time than the Claude timeout
       }
     );
 
     // The command should either complete or timeout gracefully
-    // (We don't check specific output since Claude debug output varies)
+    // We're testing that the system handles timeouts properly
+    const isGraceful = workNextResult.code === 0 || 
+                       workNextResult.code === 1 || 
+                       workNextResult.code === 143 || // SIGTERM
+                       workNextResult.code === 124;    // timeout command exit code
     
-    console.log('📝 Difficult task attempt result:');
-    console.log('stdout:', workNextResult.stdout);
-    console.log('stderr:', workNextResult.stderr);
+    console.log('📝 Simple task with short timeout result:');
     console.log('exit code:', workNextResult.code);
+    console.log('graceful handling:', isGraceful);
+    
+    expect(isGraceful).toBe(true);
 
-  }, 120000); // 2 minute timeout for this test
+  }, 60000); // 1 minute timeout for this test
 });
