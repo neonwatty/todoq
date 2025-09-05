@@ -16,6 +16,7 @@ node_modules/
 coverage/
 *.lcov
 .nyc_output/
+test-*.mjs
 
 # Production build
 dist/
@@ -59,6 +60,10 @@ logs/
 
 # OS
 Thumbs.db
+
+# Backup files
+*.bak
+*.bak2
 
 # Package manager
 .npm
