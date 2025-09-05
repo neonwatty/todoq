@@ -25,8 +25,12 @@ export class ClaudeService {
         model: todoqConfig.claude.model,
         verbose: todoqConfig.claude.verbose,
         streaming: todoqConfig.claude.streaming,
+        outputFormat: todoqConfig.claude.outputFormat,
+        permissionMode: todoqConfig.claude.permissionMode,
+        dangerouslySkipPermissions: todoqConfig.claude.dangerouslySkipPermissions,
         allowedTools: todoqConfig.claude.allowedTools,
-        customArgs: todoqConfig.claude.customArgs
+        customArgs: todoqConfig.claude.customArgs,
+        continueSession: todoqConfig.claude.continueSession
       };
     }
     
@@ -196,6 +200,11 @@ export class ClaudeService {
         execOptions.buffer = false;
       }
 
+      // Debug: log the command being executed
+      if (this.configManager.isVerbose()) {
+        console.log('DEBUG: Executing Claude command:', claudePath, cliArgs.join(' '));
+      }
+      
       const childProcess = execa(claudePath, cliArgs, execOptions);
 
       if (this.configManager.isStreaming()) {
@@ -204,7 +213,7 @@ export class ClaudeService {
           const text = chunk.toString();
           allOutput += text;
           if (this.configManager.isVerbose()) {
-            console.log(text);
+            this.displayVerboseOutput(text);
           }
         });
 
@@ -322,6 +331,58 @@ Execute the following steps:
     }
 
     return taskInfo;
+  }
+
+  /**
+   * Display human-readable verbose output from Claude's JSON stream
+   */
+  private displayVerboseOutput(jsonText: string): void {
+    try {
+      // Split by newlines and process each potential JSON object
+      const lines = jsonText.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('{')) continue;
+        
+        try {
+          const parsed = JSON.parse(trimmed);
+          
+          // Display different types of messages
+          if (parsed.type === 'assistant' && parsed.message) {
+            const content = parsed.message.content;
+            if (Array.isArray(content)) {
+              for (const item of content) {
+                if (item.type === 'text' && item.text) {
+                  console.log(`🤖 Claude: ${item.text}`);
+                } else if (item.type === 'tool_use') {
+                  console.log(`🔧 Using ${item.name}: ${JSON.stringify(item.input)}`);
+                }
+              }
+            }
+          } else if (parsed.type === 'user' && parsed.message) {
+            const content = parsed.message.content;
+            if (Array.isArray(content)) {
+              for (const item of content) {
+                if (item.type === 'tool_result' && !item.is_error) {
+                  console.log(`✅ Tool result: ${item.content}`);
+                } else if (item.type === 'tool_result' && item.is_error) {
+                  console.log(`❌ Tool error: ${item.content}`);
+                }
+              }
+            }
+          } else if (parsed.type === 'result') {
+            if (parsed.subtype === 'success') {
+              console.log(`🎉 Final result: ${parsed.result}`);
+            }
+          }
+        } catch (parseError) {
+          // Ignore individual JSON parse errors, just skip that line
+        }
+      }
+    } catch (error) {
+      // Fallback to raw output if JSON parsing completely fails
+      console.log(jsonText);
+    }
   }
 }
 

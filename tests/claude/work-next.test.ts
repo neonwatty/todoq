@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { executeClaudeCommand, createFixtureInTestDir, debugStep, isClaudeCodeAvailable } from './commands-helpers.js';
-import { createTempDir, cleanupTempDir } from '../functional/helpers.js';
+import { createTestDir, cleanupTestDir } from '../functional/setup.js';
 import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 
@@ -8,11 +8,11 @@ describe('work-next command', () => {
   let testDir: string;
 
   beforeEach(async () => {
-    testDir = createTempDir();
+    testDir = createTestDir();
   });
 
   afterEach(() => {
-    cleanupTempDir(testDir);
+    cleanupTestDir(testDir);
   });
 
   it('should show help for work-next command', async () => {

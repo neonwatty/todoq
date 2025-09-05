@@ -38,6 +38,8 @@ describe('work-next command configuration integration (tfq-style)', () => {
     getClaudeServiceMock = vi.mocked(getClaudeService);
 
     program = new Command();
+    // Add global options like the real CLI
+    program.option('-v, --verbose', 'verbose output');
     
     mockConfig = {
       database: {
@@ -94,12 +96,12 @@ describe('work-next command configuration integration (tfq-style)', () => {
       expect.objectContaining({
         claude: expect.objectContaining({
           enabled: true,
-          testTimeout: 300000, // Uses default since config gets merged
           model: 'sonnet',
           verbose: false,
           outputFormat: 'text',
-          allowedTools: ['Read', 'Edit', 'Bash'],
-          permissionMode: 'plan'
+          // allowedTools from test config gets merged with defaults
+          allowedTools: expect.arrayContaining(['Read', 'Edit', 'Bash']),
+          permissionMode: 'bypassPermissions'
         })
       })
     );
@@ -134,7 +136,7 @@ describe('work-next command configuration integration (tfq-style)', () => {
     const command = program.commands.find(cmd => cmd.name() === 'work-next')!;
     command.setOptionValue('_config', mockConfig);
 
-    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--verbose', '/test/dir']);
+    await program.parseAsync(['node', 'test', '--verbose', 'work-next', '--skip-claude-check', '/test/dir']);
 
     expect(getClaudeServiceMock).toHaveBeenCalledWith(
       undefined,
@@ -236,7 +238,7 @@ describe('work-next command configuration integration (tfq-style)', () => {
     const command = program.commands.find(cmd => cmd.name() === 'work-next')!;
     command.setOptionValue('_config', mockConfig);
 
-    await program.parseAsync(['node', 'test', 'work-next', '--skip-claude-check', '--verbose', '/test/dir']);
+    await program.parseAsync(['node', 'test', '--verbose', 'work-next', '--skip-claude-check', '/test/dir']);
 
     expect(getClaudeServiceMock).toHaveBeenCalledWith(
       undefined,

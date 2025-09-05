@@ -16,9 +16,9 @@ todoq work-next [directory]
 - `--permission-mode <mode>` - permission handling (plan|ask|auto, default: plan)
 
 ### Control Options
-- `--verbose` - detailed logging
-- `--dangerously-skip-permissions` - skip permission prompts
-- `--continue-session` - resume most recent conversation
+- `--verbose` - enable detailed logging
+- `--dangerously-skip-permissions` - skip permission prompts (dev mode)
+- `--continue-session` - resume most recent conversation (enables multi-turn task completion)
 - `--skip-claude-check` - skip Claude availability check
 
 ## Configuration
@@ -41,22 +41,36 @@ todoq work-next [directory]
     "outputFormat": "text",
     "permissionMode": "plan",
     "verbose": false,
-    "dangerouslySkipPermissions": true,
+    "streaming": false,
+    "dangerouslySkipPermissions": false,
     "continueSession": true,
-    "allowedTools": [],
-    "customArgs": []
+    "allowedTools": ["Read", "Edit", "Bash", "Grep", "WebFetch", "WebSearch", "TodoWrite"],
+    "disallowedTools": [],
+    "customArgs": [],
+    "addDir": [],
+    "appendSystemPrompt": ""
   }
 }
 ```
 
 ### Default Values
-- `testTimeout`: 300000ms (5 minutes)
+- `enabled`: false
+- `testTimeout`: 300000ms (5 minutes)  
 - `maxIterations`: 10
 - `maxTurns`: 5
 - `model`: "sonnet"
 - `outputFormat`: "text"
-- `permissionMode`: "plan"
-- `dangerouslySkipPermissions`: true
+- `permissionMode`: "plan" 
+- `verbose`: false
+- `streaming`: false
+- `dangerouslySkipPermissions`: false
+- `continueSession`: true (enables multi-turn task completion - Claude can build on previous attempts)
+- `allowedTools`: ["Read", "Edit", "Bash", "Grep", "WebFetch", "WebSearch", "TodoWrite"]
+
+### Key Configuration Notes
+- `continueSession`: When `true`, enables multi-turn task completion where Claude can build upon previous conversation attempts to complete complex tasks. When `false`, each work-next execution starts fresh.
+- `allowedTools`: Tools that Claude Code is permitted to use without additional prompts.
+- `disallowedTools`: Tools explicitly blocked from Claude Code usage.
 
 ### Validation Ranges
 - `testTimeout`: 60000-600000ms (1-10 minutes)

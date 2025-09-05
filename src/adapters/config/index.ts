@@ -26,8 +26,9 @@ export function getDefaultConfig(): TodoqConfig {
             model: 'claude-3-5-sonnet-20241022',
             verbose: false,
             streaming: false,
-            allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
-            customArgs: []
+            allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+            customArgs: [],
+            continueSession: true // Enable session continuity for multi-turn task completion
         }
     };
 }
@@ -94,7 +95,8 @@ export function validateConfig(config: any): config is TodoqConfig {
         (!config.claude.verbose || typeof config.claude.verbose === 'boolean') &&
         (!config.claude.streaming || typeof config.claude.streaming === 'boolean') &&
         (!config.claude.allowedTools || Array.isArray(config.claude.allowedTools)) &&
-        (!config.claude.customArgs || Array.isArray(config.claude.customArgs))
+        (!config.claude.customArgs || Array.isArray(config.claude.customArgs)) &&
+        (!config.claude.continueSession || typeof config.claude.continueSession === 'boolean')
     );
 
     return hasValidDatabase && hasValidDisplay && hasValidDefaults && hasValidClaude;
@@ -198,7 +200,7 @@ export class ConfigManager {
             model: 'sonnet-4',
             verbose: false,
             streaming: false,
-            allowedTools: ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+            allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
             customArgs: []
         };
     }
@@ -232,7 +234,7 @@ export class ConfigManager {
     }
 
     public getClaudeAllowedTools(): string[] {
-        return this.config.claude?.allowedTools || ['Read', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'];
+        return this.config.claude?.allowedTools || ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'];
     }
 
     public getClaudeCustomArgs(): string[] {

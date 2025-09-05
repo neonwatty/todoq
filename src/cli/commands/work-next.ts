@@ -13,12 +13,11 @@ export function registerWorkNextCommands(program: Command): void {
     .option('--max-turns <num>', 'maximum conversation turns (1-100)', '5')
     .option('--model <model>', 'Claude model (sonnet|opus|full-model-name)', 'sonnet')
     .option('--output-format <format>', 'output format (text|json|stream-json)', 'text')
-    .option('--permission-mode <mode>', 'permission handling (plan|ask|auto)', 'plan')
-    .option('--verbose', 'enable detailed logging')
+    .option('--permission-mode <mode>', 'permission handling (acceptEdits|bypassPermissions|default|plan)', 'bypassPermissions')
     .option('--dangerously-skip-permissions', 'skip permission prompts (dev mode)')
     .option('--continue-session', 'resume most recent conversation')
     .option('--skip-claude-check', 'skip Claude availability check')
-    .action(async (directory, options) => {
+    .action(async (directory, options, command) => {
       try {
         // Get configuration from command context
         const config = options._config as TodoqConfig;
@@ -48,7 +47,8 @@ export function registerWorkNextCommands(program: Command): void {
         if (options.permissionMode) {
           claudeConfigOverride.claude.permissionMode = options.permissionMode;
         }
-        if (options.verbose) {
+        const rootOptions = command.parent?.opts() || {};
+        if (options.verbose || rootOptions.verbose) {
           claudeConfigOverride.claude.verbose = true;
         }
         if (options.dangerouslySkipPermissions) {

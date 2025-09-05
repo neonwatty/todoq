@@ -63,8 +63,12 @@ export interface TodoqConfig {
         model?: string;
         verbose?: boolean;
         streaming?: boolean;
+        outputFormat?: 'text' | 'json' | 'stream-json';
+        permissionMode?: 'acceptEdits' | 'bypassPermissions' | 'default' | 'plan';
+        dangerouslySkipPermissions?: boolean;
         allowedTools?: string[];
         customArgs?: string[];
+        continueSession?: boolean;
     };
 }
 

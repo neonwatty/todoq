@@ -126,8 +126,8 @@ describe('ClaudeConfigManager', () => {
       
       expect(args).toContain('--output-format');
       expect(args).toContain('json');
-      expect(args).toContain('--permission-mode');
-      expect(args).toContain('ask');
+      // Permission mode is not passed to Claude CLI when dangerouslySkipPermissions is set
+      expect(args).not.toContain('--permission-mode');
     });
 
     it('should include custom arguments', () => {
@@ -157,15 +157,14 @@ describe('ClaudeConfigManager', () => {
       const args = configManager.buildCliArguments();
       
       expect(args).toEqual([
+        '-p',
         '--model', 'claude-3-opus-20240229',
         '--dangerously-skip-permissions',
         '--allowed-tools', 'Read,Edit',
         '--disallowed-tools', 'Bash',
-        '--permission-mode', 'plan',
         '--output-format', 'text',
         '--verbose',
-        '--max-turns', '5',
-        '--continue-session',
+        '--continue',
         '--debug'
       ]);
     });

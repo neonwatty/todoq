@@ -84,6 +84,7 @@ export function registerConfigCommands(program: Command): void {
         .command('list')
         .alias('show')
         .description('Show all configuration')
+        .option('--json', 'output as JSON')
         .action(async (options) => {
             const config = options._config as TodoqConfig;
 
@@ -95,6 +96,9 @@ export function registerConfigCommands(program: Command): void {
                 printConfigSection('Database', config.database);
                 printConfigSection('Display', config.display);
                 printConfigSection('Defaults', config.defaults);
+                if (config.claude) {
+                    printConfigSection('Claude', config.claude);
+                }
             }
         });
 

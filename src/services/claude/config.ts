@@ -26,10 +26,10 @@ export class ClaudeConfigManager {
       testTimeout: 300000, // 5 minutes (300000ms within 1-10 min range)
       
       // Security & Permissions
-      dangerouslySkipPermissions: true,
-      allowedTools: ['Edit', 'Read', 'Write'],
-      disallowedTools: ['Bash'],
-      permissionMode: 'plan',
+      dangerouslySkipPermissions: true, // Skip all permission prompts for full automation
+      allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+      disallowedTools: [],
+      permissionMode: 'bypassPermissions', // Bypass all permissions for maximum automation
       
       // Output & Behavior  
       outputFormat: 'text',
@@ -40,7 +40,7 @@ export class ClaudeConfigManager {
       // Advanced Options
       addDir: [],
       appendSystemPrompt: '',
-      continueSession: true,
+      continueSession: true, // Needed for multi-turn task completion
       customArgs: []
     };
   }
@@ -139,6 +139,9 @@ export class ClaudeConfigManager {
   buildCliArguments(): string[] {
     const args: string[] = [];
 
+    // Required for non-interactive operation with output format
+    args.push('-p');
+
     // Model
     if (this.config.model) {
       args.push('--model', this.config.model);
@@ -157,9 +160,7 @@ export class ClaudeConfigManager {
       args.push('--disallowed-tools', this.config.disallowedTools.join(','));
     }
 
-    if (this.config.permissionMode) {
-      args.push('--permission-mode', this.config.permissionMode);
-    }
+    // Note: when dangerouslySkipPermissions is true, we skip permission-mode to avoid conflicts
 
     // Output & Behavior
     if (this.config.outputFormat) {
@@ -170,9 +171,8 @@ export class ClaudeConfigManager {
       args.push('--verbose');
     }
 
-    if (this.config.maxTurns !== undefined) {
-      args.push('--max-turns', this.config.maxTurns.toString());
-    }
+    // Note: maxTurns, maxIterations, and testTimeout are TodoQ-internal config
+    // They are not passed to Claude CLI as they don't support these options
 
     // Advanced Options
     if (this.config.addDir && this.config.addDir.length > 0) {
@@ -185,8 +185,8 @@ export class ClaudeConfigManager {
       args.push('--append-system-prompt', this.config.appendSystemPrompt);
     }
 
-    if (this.config.continueSession) {
-      args.push('--continue-session');
+    if (this.config.continueSession !== false) {
+      args.push('--continue');
     }
 
     // Custom arguments

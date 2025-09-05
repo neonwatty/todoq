@@ -19,7 +19,7 @@ export interface ClaudeConfig {
   /** Explicitly denied tools */
   disallowedTools?: string[];
   /** Permission handling mode */
-  permissionMode?: 'plan' | 'ask' | 'auto';
+  permissionMode?: 'acceptEdits' | 'bypassPermissions' | 'default' | 'plan';
   
   // Output & Behavior  
   /** Output format */
