@@ -8,7 +8,7 @@ export function registerWorkNextCommands(program: Command): void {
     .command('work-next')
     .description('Work on next task using Claude')
     .argument('[directory]', 'project directory', process.cwd())
-    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-600000)', '300000')
+    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-1200000)', '300000')
     .option('--max-iterations <num>', 'maximum Claude iterations (1-50)', '10')
     .option('--max-turns <num>', 'maximum conversation turns (1-100)', '5')
     .option('--model <model>', 'Claude model (sonnet|opus|full-model-name)', 'sonnet')
@@ -22,29 +22,31 @@ export function registerWorkNextCommands(program: Command): void {
         // Get configuration from command context
         const config = options._config as TodoqConfig;
         
-        // Apply command-line options to configuration override (tfq-style)
-        const claudeConfigOverride = { ...config };
+        // Deep copy the config to avoid mutations
+        const claudeConfigOverride = JSON.parse(JSON.stringify(config));
+        
+        // Ensure claude config exists with defaults from file config
         if (!claudeConfigOverride.claude) {
-          claudeConfigOverride.claude = {} as any;
+          claudeConfigOverride.claude = {};
         }
 
-        // Apply tfq-style command line options
-        if (options.testTimeout) {
+        // Apply command-line options only if explicitly provided
+        if (options.testTimeout !== undefined) {
           claudeConfigOverride.claude.testTimeout = parseInt(options.testTimeout);
         }
-        if (options.maxIterations) {
+        if (options.maxIterations !== undefined) {
           claudeConfigOverride.claude.maxIterations = parseInt(options.maxIterations);
         }
-        if (options.maxTurns) {
+        if (options.maxTurns !== undefined) {
           claudeConfigOverride.claude.maxTurns = parseInt(options.maxTurns);
         }
-        if (options.model) {
+        if (options.model !== undefined) {
           claudeConfigOverride.claude.model = options.model;
         }
-        if (options.outputFormat) {
+        if (options.outputFormat !== undefined) {
           claudeConfigOverride.claude.outputFormat = options.outputFormat;
         }
-        if (options.permissionMode) {
+        if (options.permissionMode !== undefined) {
           claudeConfigOverride.claude.permissionMode = options.permissionMode;
         }
         const rootOptions = command.parent?.opts() || {};

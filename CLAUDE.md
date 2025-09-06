@@ -128,7 +128,7 @@ Complete configuration options for `todoq work-next`:
 
 **Execution Control:**
 - `"maxIterations": 10` - Max iterations for TodoQ internal logic (1-50)
-- `"timeout": 180000` - Timeout in milliseconds for Claude operations (60-600 seconds)
+- `"timeout": 180000` - Timeout in milliseconds for Claude operations (60-1200 seconds)
 
 **Output & Debugging:**
 - `"verbose": true/false` - Show Claude's full conversation and reasoning
@@ -147,12 +147,12 @@ todoq work-next                                        # Use config defaults
 todoq --verbose work-next --output-format stream-json  # See Claude's conversation
 
 # Advanced options
-todoq work-next --model opus --max-iterations 15 --test-timeout 600000
+todoq work-next --model opus --max-iterations 15 --test-timeout 1200000
 todoq work-next --permission-mode plan --continue-session --skip-claude-check  
 todoq work-next --dangerously-skip-permissions         # Full permissions (tests)
 
 # All available options:
-# --test-timeout <ms>             Execution timeout (60000-600000ms)
+# --test-timeout <ms>             Execution timeout (60000-1200000ms)
 # --max-iterations <num>          Max Claude iterations (1-50) 
 # --max-turns <num>               Max conversation turns (1-100)
 # --model <model>                 Claude model (sonnet|opus|haiku)

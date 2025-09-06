@@ -52,9 +52,9 @@ describe('ClaudeConfigManager', () => {
       expect(configManager.getTimeout()).toBe(60000);
     });
 
-    it('should enforce maximum testTimeout of 600000ms', () => {
-      configManager = new ClaudeConfigManager({ testTimeout: 900000 });
-      expect(configManager.getTimeout()).toBe(600000);
+    it('should enforce maximum testTimeout of 1200000ms', () => {
+      configManager = new ClaudeConfigManager({ testTimeout: 1500000 });
+      expect(configManager.getTimeout()).toBe(1200000);
     });
 
     it('should enforce minimum maxIterations of 1', () => {

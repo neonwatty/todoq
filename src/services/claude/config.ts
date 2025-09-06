@@ -49,13 +49,13 @@ export class ClaudeConfigManager {
    * Validate configuration values (matching tfq validation)
    */
   private validateConfig(): void {
-    // Validate testTimeout (1-10 minutes: 60000-600000ms)
+    // Validate testTimeout (1-20 minutes: 60000-1200000ms)
     if (this.config.testTimeout !== undefined) {
       if (this.config.testTimeout < 60000) {
         this.config.testTimeout = 60000; // Minimum 1 minute
       }
-      if (this.config.testTimeout > 600000) {
-        this.config.testTimeout = 600000; // Maximum 10 minutes
+      if (this.config.testTimeout > 1200000) {
+        this.config.testTimeout = 1200000; // Maximum 20 minutes
       }
     }
     

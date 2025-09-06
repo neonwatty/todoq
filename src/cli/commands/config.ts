@@ -16,6 +16,7 @@ export function registerConfigCommands(program: Command): void {
         .command('get')
         .description('Get configuration value')
         .argument('<key>', 'configuration key (e.g., database.path)')
+        .option('--json', 'output as JSON')
         .action(async (key, options) => {
             const config = options._config as TodoqConfig;
 
@@ -46,7 +47,7 @@ export function registerConfigCommands(program: Command): void {
                 const [key, ...valueParts] = keyValue.split('=');
                 const value = valueParts.join('=');
 
-                if (!key || value === undefined) {
+                if (!key || value === '' || valueParts.length === 0) {
                     console.log(chalk.red('Invalid format. Use: key=value'));
                     return;
                 }
