@@ -69,6 +69,7 @@ export interface TodoqConfig {
         allowedTools?: string[];
         customArgs?: string[];
         continueSession?: boolean;
+        appendSystemPrompt?: string;
     };
 }
 

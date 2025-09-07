@@ -3,6 +3,7 @@ import path from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { ClaudeConfigManager } from './config.js';
+import { formatToolInput } from '../../cli/utils/json-formatter.js';
 import type { ClaudeConfig, WorkTaskResult, TaskContext } from './types.js';
 import type { TodoqConfig } from '../../core/types.js';
 
@@ -21,16 +22,16 @@ export class ClaudeService {
         enabled: todoqConfig.claude.enabled,
         claudePath: todoqConfig.claude.claudePath,
         maxIterations: todoqConfig.claude.maxIterations,
-        timeout: todoqConfig.claude.timeout,
+        testTimeout: todoqConfig.claude.timeout,
         model: todoqConfig.claude.model,
         verbose: todoqConfig.claude.verbose,
-        streaming: todoqConfig.claude.streaming,
         outputFormat: todoqConfig.claude.outputFormat,
         permissionMode: todoqConfig.claude.permissionMode,
         dangerouslySkipPermissions: todoqConfig.claude.dangerouslySkipPermissions,
         allowedTools: todoqConfig.claude.allowedTools,
         customArgs: todoqConfig.claude.customArgs,
-        continueSession: todoqConfig.claude.continueSession
+        continueSession: todoqConfig.claude.continueSession,
+        appendSystemPrompt: todoqConfig.claude.appendSystemPrompt
       };
     }
     
@@ -416,7 +417,8 @@ Execute the following steps:
                 if (item.type === 'text' && item.text) {
                   console.log(`🤖 Claude: ${item.text}`);
                 } else if (item.type === 'tool_use') {
-                  console.log(`🔧 Using ${item.name}: ${JSON.stringify(item.input)}`);
+                  const formattedInput = formatToolInput(item.name, item.input);
+                  console.log(`🔧 Using ${item.name}:${formattedInput}`);
                 }
               }
             }
