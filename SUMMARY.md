@@ -52,6 +52,10 @@ todoq complete 1.0           # Mark task complete
 - `todoq remaining --json` - Count incomplete tasks (JSON format)
 - `todoq stats` - Show progress statistics
 
+**Claude Integration (AI-Powered Task Execution):**
+- `todoq work-next` - Have Claude work on the next task automatically
+- `todoq --verbose work-next --output-format stream-json` - See Claude's full conversation
+
 **Task Management:**
 - `todoq add 1.1 "Task name"` - Insert/add new task
 - `todoq update 1.0` - Update task details

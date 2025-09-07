@@ -70,6 +70,7 @@ todoq --verbose work-next --output-format stream-json  # See Claude's full conve
 npm run build           # Build with esbuild to dist/cli/index.js
 npm run dev            # Development mode with tsx
 npm run test           # Run all tests with vitest
+npm run test:claude    # Run Claude integration tests
 npm run lint           # ESLint check
 npm run typecheck      # TypeScript check
 ```
@@ -95,7 +96,7 @@ npm run dev [command]          # Development mode
 
 Uses cosmiconfig for flexible loading from `.todoqrc`, `todoq.config.js`, or `package.json` (todoq property).
 
-Default storage: `~/.todoq/tasks.db`
+Default storage: `.todoq/todoq.db`
 
 ### Claude Integration Configuration
 
