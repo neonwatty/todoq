@@ -1,6 +1,6 @@
 import { execa } from 'execa';
 import path from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { ClaudeConfigManager } from './config.js';
 import type { ClaudeConfig, WorkTaskResult, TaskContext } from './types.js';
@@ -232,8 +232,20 @@ export class ClaudeService {
 
       const taskInfo = this.parseTaskInfo(allOutput);
 
+      // Check if Claude exited with non-zero code
+      if (result.exitCode !== 0) {
+        return {
+          success: false,
+          error: `Claude Code exited with code ${result.exitCode}. This is a Claude execution error, not a TodoQ error.`,
+          output: allOutput,
+          duration: Date.now() - startTime,
+          iterations: 1,
+          ...taskInfo
+        };
+      }
+
       return {
-        success: result.exitCode === 0,
+        success: true,
         output: allOutput,
         duration: Date.now() - startTime,
         iterations: 1,
@@ -242,6 +254,18 @@ export class ClaudeService {
 
     } catch (error) {
       const err = error as any;
+      
+      // Check if this is an execa error with exit code
+      if (err.exitCode !== undefined && err.exitCode !== 0) {
+        return {
+          success: false,
+          error: `Claude Code exited with code ${err.exitCode}. This is a Claude execution error, not a TodoQ error.`,
+          output: err.stdout || err.stderr || '',
+          duration: Date.now() - startTime,
+          iterations: 1
+        };
+      }
+      
       return {
         success: false,
         error: err.message || 'Unknown error',
@@ -256,8 +280,45 @@ export class ClaudeService {
    * Build prompt for Claude execution with exact steps 4-8 content
    */
   private buildPrompt(context: TaskContext): string {
-    return `You are working on task: ${JSON.stringify(context.taskJson, null, 2)}
-Project directory: ${context.projectDir}
+    try {
+      // Load the prompt template from file
+      const currentFile = fileURLToPath(import.meta.url);
+      const promptPath = path.join(
+        path.dirname(currentFile), 
+        'prompts', 
+        'task-execution.md'
+      );
+      
+      let promptTemplate: string;
+      
+      if (existsSync(promptPath)) {
+        // Read from file if it exists
+        promptTemplate = readFileSync(promptPath, 'utf-8');
+      } else {
+        // Fallback to embedded prompt if file not found
+        promptTemplate = this.getDefaultPromptTemplate();
+      }
+      
+      // Replace placeholders with actual values
+      return promptTemplate
+        .replace('{{TASK_JSON}}', JSON.stringify(context.taskJson, null, 2))
+        .replace('{{PROJECT_DIR}}', context.projectDir);
+        
+    } catch (error) {
+      // If any error occurs, use the fallback embedded prompt
+      console.warn('Warning: Could not load prompt template from file, using embedded default');
+      return this.getDefaultPromptTemplate()
+        .replace('{{TASK_JSON}}', JSON.stringify(context.taskJson, null, 2))
+        .replace('{{PROJECT_DIR}}', context.projectDir);
+    }
+  }
+
+  /**
+   * Get default prompt template (fallback when file is not available)
+   */
+  private getDefaultPromptTemplate(): string {
+    return `You are working on task: {{TASK_JSON}}
+Project directory: {{PROJECT_DIR}}
 
 Execute the following steps:
 

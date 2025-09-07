@@ -39,6 +39,29 @@ vi.mock('../../../../src/adapters/config/index.js', () => ({
         defaults: {
             priority: 1,
             status: 'pending'
+        },
+        claude: {
+            enabled: true,
+            maxIterations: 10,
+            timeout: 180000,
+            model: 'opusplan',
+            verbose: false,
+            outputFormat: 'stream-json',
+            allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
+            customArgs: [],
+            continueSession: true,
+            appendSystemPrompt: `
+## TodoQ Task Execution Guidelines
+
+When working on tasks:
+1. Follow existing code conventions and patterns in the codebase
+2. Write comprehensive tests for new functionality
+3. Run linting and type checking before marking tasks complete
+4. Use TodoWrite to track progress through implementation steps
+5. Document complex logic with clear comments
+
+Remember: Quality over speed. Ensure each task is fully complete before moving on.
+`.trim()
         }
     }))
 }));
@@ -91,6 +114,14 @@ describe('Init Commands', () => {
                 expect.stringContaining('"database"')
             );
 
+            // Verify Claude configuration with opusplan is included
+            const configCall = mockFs.writeFileSync.mock.calls[0];
+            const configContent = configCall[1];
+            expect(configContent).toContain('"claude"');
+            expect(configContent).toContain('"model": "opusplan"');
+            expect(configContent).toContain('"enabled": true');
+            expect(configContent).toContain('"outputFormat": "stream-json"');
+
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Initializing TodoQ...'));
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Database initialized successfully!'));
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('TodoQ is ready to use!'));
@@ -122,6 +153,34 @@ describe('Init Commands', () => {
             await program.parseAsync(['node', 'test', 'init', '--from-json', 'tasks.json']);
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('To import tasks, run: todoq import tasks.json'));
+        });
+
+        it('should include Claude configuration with opusplan model in generated config', async () => {
+            mockFs.existsSync.mockReturnValue(false);
+            mockFs.mkdirSync.mockImplementation(() => {});
+            mockFs.writeFileSync.mockImplementation(() => {});
+
+            await program.parseAsync(['node', 'test', 'init']);
+
+            // Get the written config content
+            expect(mockFs.writeFileSync).toHaveBeenCalled();
+            const configCall = mockFs.writeFileSync.mock.calls[0];
+            const configPath = configCall[0];
+            const configContent = configCall[1];
+            
+            // Parse the JSON to verify structure
+            const config = JSON.parse(configContent);
+            
+            // Verify Claude configuration
+            expect(config.claude).toBeDefined();
+            expect(config.claude.enabled).toBe(true);
+            expect(config.claude.model).toBe('opusplan');
+            expect(config.claude.outputFormat).toBe('stream-json');
+            expect(config.claude.maxIterations).toBe(10);
+            expect(config.claude.allowedTools).toContain('TodoWrite');
+            expect(config.claude.continueSession).toBe(true);
+            expect(config.claude.appendSystemPrompt).toBeDefined();
+            expect(config.claude.appendSystemPrompt).toContain('TodoQ Task Execution Guidelines');
         });
 
         it.skip('should use interactive setup when --interactive flag is used', async () => {

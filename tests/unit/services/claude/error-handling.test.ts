@@ -409,4 +409,153 @@ describe('ClaudeService Error Handling', () => {
       expect(service).toBeInstanceOf(ClaudeService);
     });
   });
+
+  describe('Claude exit code error reporting', () => {
+    it('should report Claude exit code 1 with clear error message', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = vi.mocked(execa);
+      const { existsSync } = await import('fs');
+      const mockExistsSync = vi.mocked(existsSync);
+
+      mockExistsSync.mockReturnValue(true);
+
+      // Mock Claude path detection
+      mockExeca.mockResolvedValueOnce({ stdout: 'Claude CLI v1.0.0', stderr: '', exitCode: 0 } as any); // --version check
+
+      // Mock successful todoq CLI calls
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // init
+      mockExeca.mockResolvedValueOnce({ stdout: '1', stderr: '', exitCode: 0 } as any); // remaining count
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: JSON.stringify({ taskNumber: '1.0', name: 'Test Task' }), 
+        stderr: '', 
+        exitCode: 0 
+      } as any); // current --json
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // current --start
+
+      // Mock Claude execution with exit code 1
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: 'Claude output before error', 
+        stderr: 'Claude error output', 
+        exitCode: 1 
+      } as any);
+
+      const service = new ClaudeService(undefined, undefined, mockConfig);
+      const context = await service.executeTodoqGetNext('/test/project');
+      const result = await service.executeTodoqNextPrompt(context);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Claude Code exited with code 1. This is a Claude execution error, not a TodoQ error.');
+      expect(result.output).toContain('Claude output before error');
+    });
+
+    it('should report Claude exit code 2 with clear error message', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = vi.mocked(execa);
+      const { existsSync } = await import('fs');
+      const mockExistsSync = vi.mocked(existsSync);
+
+      mockExistsSync.mockReturnValue(true);
+
+      // Mock Claude path detection
+      mockExeca.mockResolvedValueOnce({ stdout: 'Claude CLI v1.0.0', stderr: '', exitCode: 0 } as any); // --version check
+
+      // Mock successful todoq CLI calls
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // init
+      mockExeca.mockResolvedValueOnce({ stdout: '1', stderr: '', exitCode: 0 } as any); // remaining count
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: JSON.stringify({ taskNumber: '1.0', name: 'Test Task' }), 
+        stderr: '', 
+        exitCode: 0 
+      } as any); // current --json
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // current --start
+
+      // Mock Claude execution with exit code 2
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: '', 
+        stderr: 'Claude fatal error', 
+        exitCode: 2 
+      } as any);
+
+      const service = new ClaudeService(undefined, undefined, mockConfig);
+      const context = await service.executeTodoqGetNext('/test/project');
+      const result = await service.executeTodoqNextPrompt(context);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Claude Code exited with code 2. This is a Claude execution error, not a TodoQ error.');
+    });
+
+    it('should handle Claude execution throwing error with exit code', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = vi.mocked(execa);
+      const { existsSync } = await import('fs');
+      const mockExistsSync = vi.mocked(existsSync);
+
+      mockExistsSync.mockReturnValue(true);
+
+      // Mock Claude path detection
+      mockExeca.mockResolvedValueOnce({ stdout: 'Claude CLI v1.0.0', stderr: '', exitCode: 0 } as any); // --version check
+
+      // Mock successful todoq CLI calls
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // init
+      mockExeca.mockResolvedValueOnce({ stdout: '1', stderr: '', exitCode: 0 } as any); // remaining count
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: JSON.stringify({ taskNumber: '1.0', name: 'Test Task' }), 
+        stderr: '', 
+        exitCode: 0 
+      } as any); // current --json
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // current --start
+
+      // Mock Claude execution throwing error with exit code
+      const error = new Error('Command failed') as any;
+      error.exitCode = 127;
+      error.stdout = 'Partial output';
+      error.stderr = 'Command not found';
+      mockExeca.mockRejectedValueOnce(error);
+
+      const service = new ClaudeService(undefined, undefined, mockConfig);
+      const context = await service.executeTodoqGetNext('/test/project');
+      const result = await service.executeTodoqNextPrompt(context);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Claude Code exited with code 127. This is a Claude execution error, not a TodoQ error.');
+      expect(result.output).toContain('Partial output');
+    });
+
+    it('should handle successful Claude execution (exit code 0)', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = vi.mocked(execa);
+      const { existsSync } = await import('fs');
+      const mockExistsSync = vi.mocked(existsSync);
+
+      mockExistsSync.mockReturnValue(true);
+
+      // Mock Claude path detection
+      mockExeca.mockResolvedValueOnce({ stdout: 'Claude CLI v1.0.0', stderr: '', exitCode: 0 } as any); // --version check
+
+      // Mock successful todoq CLI calls
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // init
+      mockExeca.mockResolvedValueOnce({ stdout: '1', stderr: '', exitCode: 0 } as any); // remaining count
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: JSON.stringify({ taskNumber: '1.0', name: 'Test Task' }), 
+        stderr: '', 
+        exitCode: 0 
+      } as any); // current --json
+      mockExeca.mockResolvedValueOnce({ stdout: '', stderr: '', exitCode: 0 } as any); // current --start
+
+      // Mock successful Claude execution
+      mockExeca.mockResolvedValueOnce({ 
+        stdout: 'Task completed successfully', 
+        stderr: '', 
+        exitCode: 0 
+      } as any);
+
+      const service = new ClaudeService(undefined, undefined, mockConfig);
+      const context = await service.executeTodoqGetNext('/test/project');
+      const result = await service.executeTodoqNextPrompt(context);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(result.output).toContain('Task completed successfully');
+    });
+  });
 });

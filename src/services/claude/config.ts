@@ -35,7 +35,7 @@ export class ClaudeConfigManager {
       outputFormat: 'text',
       verbose: true,
       maxTurns: 5,
-      model: 'sonnet',
+      model: 'opusplan',
       
       // Advanced Options
       addDir: [],

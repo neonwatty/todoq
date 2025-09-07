@@ -101,7 +101,7 @@ describe('work-next command configuration integration (tfq-style)', () => {
           outputFormat: 'text',
           // allowedTools from test config gets merged with defaults
           allowedTools: expect.arrayContaining(['Read', 'Edit', 'Bash']),
-          permissionMode: 'bypassPermissions'
+          permissionMode: 'plan' // Now correctly uses config value instead of default
         })
       })
     );
@@ -249,7 +249,7 @@ describe('work-next command configuration integration (tfq-style)', () => {
         defaults: mockConfig.defaults,
         claude: expect.objectContaining({
           enabled: true, // Preserved
-          testTimeout: 300000, // Default applied
+          testTimeout: 180000, // Config value preserved (not default)
           model: 'sonnet', // Preserved
           outputFormat: 'text', // Preserved
           verbose: true // Overridden

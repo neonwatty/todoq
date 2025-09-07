@@ -108,14 +108,15 @@ Complete configuration options for `todoq work-next`:
     "claudePath": "/path/to/claude",
     "maxIterations": 10,
     "timeout": 180000,
-    "model": "sonnet",
+    "model": "opusplan",
     "verbose": true,
     "outputFormat": "stream-json",
     "permissionMode": "bypassPermissions",
     "dangerouslySkipPermissions": false,
     "allowedTools": ["Read", "Write", "Edit", "Bash", "Grep", "WebFetch", "WebSearch", "TodoWrite"],
     "customArgs": ["--custom-flag"],
-    "continueSession": true
+    "continueSession": true,
+    "appendSystemPrompt": "Custom instructions for Claude to follow during task execution"
   }
 }
 ```
@@ -123,7 +124,7 @@ Complete configuration options for `todoq work-next`:
 **Core Settings:**
 - `"enabled": true/false` - Enable/disable Claude integration
 - `"claudePath": "path"` - Path to Claude Code binary (auto-detected if omitted)  
-- `"model": "sonnet|opus|haiku"` - Claude model to use (default: "sonnet")
+- `"model": "sonnet|opus|opusplan|haiku"` - Claude model to use (default: "opusplan" - uses opus for planning, sonnet for execution)
 - `"continueSession": true/false` - Continue previous conversation (default: true)
 
 **Execution Control:**
@@ -190,7 +191,7 @@ todoq work-next --dangerously-skip-permissions         # Full permissions (tests
     "dangerouslySkipPermissions": true,
     "maxIterations": 20,
     "timeout": 300000,
-    "model": "opus"
+    "model": "opusplan"
   }
 }
 ```

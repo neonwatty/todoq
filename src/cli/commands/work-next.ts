@@ -11,7 +11,7 @@ export function registerWorkNextCommands(program: Command): void {
     .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-1200000)', '300000')
     .option('--max-iterations <num>', 'maximum Claude iterations (1-50)', '10')
     .option('--max-turns <num>', 'maximum conversation turns (1-100)', '5')
-    .option('--model <model>', 'Claude model (sonnet|opus|full-model-name)', 'sonnet')
+    .option('--model <model>', 'Claude model (sonnet|opus|opusplan|haiku)', 'opusplan')
     .option('--output-format <format>', 'output format (text|json|stream-json)', 'text')
     .option('--permission-mode <mode>', 'permission handling (acceptEdits|bypassPermissions|default|plan)', 'bypassPermissions')
     .option('--dangerously-skip-permissions', 'skip permission prompts (dev mode)')
@@ -19,6 +19,16 @@ export function registerWorkNextCommands(program: Command): void {
     .option('--skip-claude-check', 'skip Claude availability check')
     .action(async (directory, options, command) => {
       try {
+        // Define default values for options
+        const DEFAULTS = {
+          testTimeout: '300000',
+          maxIterations: '10',
+          maxTurns: '5',
+          model: 'opusplan',
+          outputFormat: 'text',
+          permissionMode: 'bypassPermissions'
+        };
+
         // Get configuration from command context
         const config = options._config as TodoqConfig;
         
@@ -30,23 +40,23 @@ export function registerWorkNextCommands(program: Command): void {
           claudeConfigOverride.claude = {};
         }
 
-        // Apply command-line options only if explicitly provided
-        if (options.testTimeout !== undefined) {
+        // Apply command-line options only if they differ from defaults (i.e., were explicitly provided)
+        if (options.testTimeout !== DEFAULTS.testTimeout) {
           claudeConfigOverride.claude.testTimeout = parseInt(options.testTimeout);
         }
-        if (options.maxIterations !== undefined) {
+        if (options.maxIterations !== DEFAULTS.maxIterations) {
           claudeConfigOverride.claude.maxIterations = parseInt(options.maxIterations);
         }
-        if (options.maxTurns !== undefined) {
+        if (options.maxTurns !== DEFAULTS.maxTurns) {
           claudeConfigOverride.claude.maxTurns = parseInt(options.maxTurns);
         }
-        if (options.model !== undefined) {
+        if (options.model !== DEFAULTS.model) {
           claudeConfigOverride.claude.model = options.model;
         }
-        if (options.outputFormat !== undefined) {
+        if (options.outputFormat !== DEFAULTS.outputFormat) {
           claudeConfigOverride.claude.outputFormat = options.outputFormat;
         }
-        if (options.permissionMode !== undefined) {
+        if (options.permissionMode !== DEFAULTS.permissionMode) {
           claudeConfigOverride.claude.permissionMode = options.permissionMode;
         }
         const rootOptions = command.parent?.opts() || {};
@@ -89,7 +99,7 @@ export function registerWorkNextCommands(program: Command): void {
         
         const context = await claudeService.executeTodoqGetNext(directory);
         
-        console.log(chalk.green(`Working on task: ${context.taskJson.number} - ${context.taskJson.name}`));
+        console.log(chalk.green(`Working on task: ${context.taskJson.taskNumber} - ${context.taskJson.name}`));
         if (context.taskJson.description) {
           console.log(chalk.gray(`Description: ${context.taskJson.description}`));
         }
@@ -117,8 +127,19 @@ export function registerWorkNextCommands(program: Command): void {
           }
         } else {
           console.error(chalk.red('✗ Task work failed'));
-          console.error(chalk.red(`Error: ${result.error}`));
-          console.error(chalk.gray(`Duration: ${Math.round(result.duration / 1000)}s`));
+          
+          // Check if this is a Claude-specific error
+          if (result.error?.includes('Claude Code exited with code')) {
+            console.error(chalk.yellow('\n⚠️  Claude Code Error'));
+            console.error(chalk.yellow(result.error));
+            console.error(chalk.gray('\nThis indicates Claude encountered an issue during task execution.'));
+            console.error(chalk.gray('Common causes: syntax errors, API limits, or task complexity.'));
+            console.error(chalk.gray('Try running with --verbose for more details.'));
+          } else {
+            console.error(chalk.red(`Error: ${result.error}`));
+          }
+          
+          console.error(chalk.gray(`\nDuration: ${Math.round(result.duration / 1000)}s`));
           
           if (options.verbose && result.output) {
             console.error(chalk.gray('\n--- Claude Output ---'));

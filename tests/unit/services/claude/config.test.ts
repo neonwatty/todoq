@@ -21,7 +21,7 @@ describe('ClaudeConfigManager', () => {
       expect(configManager.isEnabled()).toBe(false);
       expect(configManager.getMaxIterations()).toBe(10);
       expect(configManager.getTimeout()).toBe(300000);
-      expect(configManager.getModel()).toBe('sonnet');
+      expect(configManager.getModel()).toBe('opusplan');
       expect(configManager.isVerbose()).toBe(true);
       expect(configManager.isStreaming()).toBe(false);
     });

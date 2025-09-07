@@ -20,15 +20,27 @@ export function getDefaultConfig(): TodoqConfig {
             priority: 0
         },
         claude: {
-            enabled: false,
-            maxIterations: 3,
+            enabled: true,
+            maxIterations: 10,
             timeout: 180000, // 3 minutes
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'opusplan',
             verbose: false,
-            streaming: false,
+            outputFormat: 'stream-json',
             allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite'],
             customArgs: [],
-            continueSession: true // Enable session continuity for multi-turn task completion
+            continueSession: true, // Enable session continuity for multi-turn task completion
+            appendSystemPrompt: `
+## TodoQ Task Execution Guidelines
+
+When working on tasks:
+1. Follow existing code conventions and patterns in the codebase
+2. Write comprehensive tests for new functionality
+3. Run linting and type checking before marking tasks complete
+4. Use TodoWrite to track progress through implementation steps
+5. Document complex logic with clear comments
+
+Remember: Quality over speed. Ensure each task is fully complete before moving on.
+`.trim()
         }
     };
 }
