@@ -5,25 +5,32 @@ import type { TodoqConfig } from '../../../src/core/types.js';
 
 // Mock the Claude service
 vi.mock('../../../src/services/claude/index.js', () => ({
-  getClaudeService: vi.fn(() => ({
-    isAvailable: vi.fn().mockResolvedValue(true),
-    executeTodoqGetNext: vi.fn().mockResolvedValue({
-      taskJson: {
-        number: '1.0',
-        name: 'Test Task',
-        description: 'Test Description'
-      },
-      projectDir: '/test/dir',
-      remainingCount: 1
-    }),
-    executeTodoqNextPrompt: vi.fn().mockResolvedValue({
-      success: true,
-      duration: 5000,
-      iterations: 1,
-      taskNumber: '1.0',
-      taskName: 'Test Task'
-    })
-  }))
+  getClaudeService: vi.fn((configPath, overridePath, todoqConfig) => {
+    // Calculate verbose based on the config passed in
+    // Default to true (ClaudeConfigManager default) if not specified
+    const isVerbose = todoqConfig?.claude?.verbose ?? true;
+    
+    return {
+      isAvailable: vi.fn().mockResolvedValue(true),
+      isVerbose: vi.fn().mockReturnValue(isVerbose),  // Return the calculated verbose value
+      executeTodoqGetNext: vi.fn().mockResolvedValue({
+        taskJson: {
+          number: '1.0',
+          name: 'Test Task',
+          description: 'Test Description'
+        },
+        projectDir: '/test/dir',
+        remainingCount: 1
+      }),
+      executeTodoqNextPrompt: vi.fn().mockResolvedValue({
+        success: true,
+        duration: 5000,
+        iterations: 1,
+        taskNumber: '1.0',
+        taskName: 'Test Task'
+      })
+    };
+  })
 }));
 
 describe('work-next command configuration integration (tfq-style)', () => {
@@ -267,6 +274,7 @@ describe('work-next command configuration integration (tfq-style)', () => {
     // Make Claude service throw an error
     getClaudeServiceMock.mockReturnValue({
       isAvailable: vi.fn().mockResolvedValue(true),
+      isVerbose: vi.fn().mockReturnValue(false),  // Add isVerbose method
       executeTodoqGetNext: vi.fn().mockRejectedValue(new Error('Test error')),
       executeTodoqNextPrompt: vi.fn()
     });

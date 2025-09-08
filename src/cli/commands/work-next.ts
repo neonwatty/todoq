@@ -8,27 +8,20 @@ export function registerWorkNextCommands(program: Command): void {
     .command('work-next')
     .description('Work on next task using Claude')
     .argument('[directory]', 'project directory', process.cwd())
-    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-1200000)', '300000')
-    .option('--max-iterations <num>', 'maximum Claude iterations (1-50)', '10')
-    .option('--max-turns <num>', 'maximum conversation turns (1-100)', '5')
-    .option('--model <model>', 'Claude model (sonnet|opus|opusplan|haiku)', 'opusplan')
-    .option('--output-format <format>', 'output format (text|json|stream-json)', 'text')
-    .option('--permission-mode <mode>', 'permission handling (acceptEdits|bypassPermissions|default|plan)', 'bypassPermissions')
+    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-1200000)')
+    .option('--max-iterations <num>', 'maximum Claude iterations (1-50)')
+    .option('--max-turns <num>', 'maximum conversation turns (1-100)')
+    .option('--model <model>', 'Claude model (sonnet|opus|opusplan|haiku)')
+    .option('--output-format <format>', 'output format (text|json|stream-json)')
+    .option('--permission-mode <mode>', 'permission handling (acceptEdits|bypassPermissions|default|plan)')
     .option('--dangerously-skip-permissions', 'skip permission prompts (dev mode)')
     .option('--continue-session', 'resume most recent conversation')
     .option('--skip-claude-check', 'skip Claude availability check')
     .action(async (directory, options, command) => {
+      // Declare isVerbose at the outer scope so it's available in catch block
+      let isVerbose = false;
+      
       try {
-        // Define default values for options
-        const DEFAULTS = {
-          testTimeout: '300000',
-          maxIterations: '10',
-          maxTurns: '5',
-          model: 'opusplan',
-          outputFormat: 'text',
-          permissionMode: 'bypassPermissions'
-        };
-
         // Get configuration from command context
         const config = options._config as TodoqConfig;
         
@@ -40,29 +33,35 @@ export function registerWorkNextCommands(program: Command): void {
           claudeConfigOverride.claude = {};
         }
 
-        // Apply command-line options only if they differ from defaults (i.e., were explicitly provided)
-        if (options.testTimeout !== DEFAULTS.testTimeout) {
+        // Apply command-line options only if they were explicitly provided
+        // Commander sets undefined for options that weren't specified
+        if (options.testTimeout !== undefined) {
           claudeConfigOverride.claude.testTimeout = parseInt(options.testTimeout);
         }
-        if (options.maxIterations !== DEFAULTS.maxIterations) {
+        if (options.maxIterations !== undefined) {
           claudeConfigOverride.claude.maxIterations = parseInt(options.maxIterations);
         }
-        if (options.maxTurns !== DEFAULTS.maxTurns) {
+        if (options.maxTurns !== undefined) {
           claudeConfigOverride.claude.maxTurns = parseInt(options.maxTurns);
         }
-        if (options.model !== DEFAULTS.model) {
+        if (options.model !== undefined) {
           claudeConfigOverride.claude.model = options.model;
         }
-        if (options.outputFormat !== DEFAULTS.outputFormat) {
+        if (options.outputFormat !== undefined) {
           claudeConfigOverride.claude.outputFormat = options.outputFormat;
         }
-        if (options.permissionMode !== DEFAULTS.permissionMode) {
+        if (options.permissionMode !== undefined) {
           claudeConfigOverride.claude.permissionMode = options.permissionMode;
         }
+        
+        // Check for verbose flag from either local or parent command
         const rootOptions = command.parent?.opts() || {};
-        if (options.verbose || rootOptions.verbose) {
+        // Only override verbose if explicitly set via command line
+        if (options.verbose === true || rootOptions.verbose === true) {
           claudeConfigOverride.claude.verbose = true;
         }
+        
+        // Boolean flags only override if explicitly set (will be true when flag is used)
         if (options.dangerouslySkipPermissions) {
           claudeConfigOverride.claude.dangerouslySkipPermissions = true;
         }
@@ -73,9 +72,12 @@ export function registerWorkNextCommands(program: Command): void {
         // Get Claude service instance with configuration
         const claudeService = getClaudeService(undefined, undefined, claudeConfigOverride);
         
+        // Get the final verbose setting from the ClaudeService (after defaults are applied)
+        isVerbose = claudeService.isVerbose();
+        
         // Check Claude availability unless skipped
         if (!options.skipClaudeCheck) {
-          if (options.verbose) {
+          if (isVerbose) {
             console.log(chalk.blue('Checking Claude availability...'));
           }
           
@@ -87,13 +89,13 @@ export function registerWorkNextCommands(program: Command): void {
             process.exit(1);
           }
           
-          if (options.verbose) {
+          if (isVerbose) {
             console.log(chalk.green('✓ Claude Code is available'));
           }
         }
 
         // Execute steps 1-3: Get next task
-        if (options.verbose) {
+        if (isVerbose) {
           console.log(chalk.blue('Executing steps 1-3: Getting next task...'));
         }
         
@@ -107,7 +109,7 @@ export function registerWorkNextCommands(program: Command): void {
         console.log('');
 
         // Execute steps 4-8: Work on task with Claude
-        if (options.verbose) {
+        if (isVerbose) {
           console.log(chalk.blue('Executing steps 4-8: Working on task with Claude...'));
         }
         
@@ -121,7 +123,7 @@ export function registerWorkNextCommands(program: Command): void {
             console.log(chalk.green(`✓ Completed: ${result.taskNumber} - ${result.taskName}`));
           }
           
-          if (options.verbose && result.output) {
+          if (isVerbose && result.output) {
             console.log(chalk.gray('\n--- Claude Output ---'));
             console.log(result.output);
           }
@@ -141,7 +143,7 @@ export function registerWorkNextCommands(program: Command): void {
           
           console.error(chalk.gray(`\nDuration: ${Math.round(result.duration / 1000)}s`));
           
-          if (options.verbose && result.output) {
+          if (isVerbose && result.output) {
             console.error(chalk.gray('\n--- Claude Output ---'));
             console.error(result.output);
           }
@@ -153,7 +155,7 @@ export function registerWorkNextCommands(program: Command): void {
         const err = error as Error;
         console.error(chalk.red('✗ Unexpected error:'), err.message);
         
-        if (options.verbose && err.stack) {
+        if (isVerbose && err.stack) {
           console.error(chalk.gray('\n--- Stack Trace ---'));
           console.error(err.stack);
         }

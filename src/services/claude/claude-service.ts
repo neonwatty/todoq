@@ -87,6 +87,13 @@ export class ClaudeService {
   }
 
   /**
+   * Check if verbose mode is enabled
+   */
+  isVerbose(): boolean {
+    return this.configManager.isVerbose();
+  }
+
+  /**
    * Execute steps 1-3: Get next task via todoq CLI calls
    */
   async executeTodoqGetNext(projectDir: string): Promise<TaskContext> {
