@@ -531,6 +531,23 @@ TodoQ supports efficient bulk operations with:
 - Rollback on failures
 - Progress tracking for large imports
 
+## Claude Code Integration
+
+TodoQ integrates with Claude Code for AI-powered task execution. The `work-next` command supports automatic retry with exponential backoff for resilient headless execution:
+
+```json
+{
+  "claude": {
+    "maxRetries": 10,        // Retry up to 10 times
+    "retryDelay": 1000,      // Start with 1s delay
+    "retryBackoffMultiplier": 2,  // Double each retry
+    "maxRetryDelay": 30000   // Cap at 30s
+  }
+}
+```
+
+Retries on exit codes 1-2 and timeouts. See [CLAUDE.md](CLAUDE.md) for details.
+
 ## Testing
 
 TodoQ has a comprehensive test suite covering all aspects of functionality:

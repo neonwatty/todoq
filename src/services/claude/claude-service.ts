@@ -31,7 +31,12 @@ export class ClaudeService {
         allowedTools: todoqConfig.claude.allowedTools,
         customArgs: todoqConfig.claude.customArgs,
         continueSession: todoqConfig.claude.continueSession,
-        appendSystemPrompt: todoqConfig.claude.appendSystemPrompt
+        appendSystemPrompt: todoqConfig.claude.appendSystemPrompt,
+        // Retry configuration
+        maxRetries: todoqConfig.claude.maxRetries,
+        retryDelay: todoqConfig.claude.retryDelay,
+        retryBackoffMultiplier: todoqConfig.claude.retryBackoffMultiplier,
+        maxRetryDelay: todoqConfig.claude.maxRetryDelay
       };
     }
     
@@ -178,13 +183,136 @@ export class ClaudeService {
   }
 
   /**
-   * Execute steps 4-8: Work on task using Claude
+   * Determine if an error is retryable
    */
-  async executeTodoqNextPrompt(context: TaskContext): Promise<WorkTaskResult> {
+  private isRetryableError(error: any): boolean {
+    // Timeout errors are retryable
+    if (error.timedOut || error.code === 'ETIMEDOUT') {
+      return true;
+    }
+    
+    // Exit codes 1-2 are often transient errors (Claude execution errors)
+    if (error.exitCode !== undefined && error.exitCode >= 1 && error.exitCode <= 2) {
+      return true;
+    }
+    
+    // Exit code 127 (command not found) is not retryable
+    if (error.exitCode === 127) {
+      return false;
+    }
+    
+    // Permission errors are not retryable
+    if (error.message?.toLowerCase().includes('permission denied') || 
+        error.stderr?.toLowerCase().includes('permission denied')) {
+      return false;
+    }
+    
+    // ENOENT (file not found) is not retryable
+    if (error.code === 'ENOENT') {
+      return false;
+    }
+    
+    // Default: don't retry unknown errors
+    return false;
+  }
+
+  /**
+   * Calculate exponential backoff delay
+   */
+  private calculateBackoffDelay(attempt: number): number {
+    const baseDelay = this.configManager.getRetryDelay();
+    const multiplier = this.configManager.getRetryBackoffMultiplier();
+    const maxDelay = this.configManager.getMaxRetryDelay();
+    
+    const delay = baseDelay * Math.pow(multiplier, attempt);
+    return Math.min(delay, maxDelay);
+  }
+
+  /**
+   * Execute Claude with prompt and handle retries
+   */
+  private async executeClaudeWithRetry(context: TaskContext, prompt: string): Promise<WorkTaskResult> {
+    const startTime = Date.now();
+    const maxRetries = this.configManager.getMaxRetries();
+    let lastError: any = null;
+    let totalOutput = '';
+    let actualRetryCount = 0;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await this.executeClaudeOnce(context, prompt);
+        
+        // Add retry attempts to result
+        return {
+          ...result,
+          duration: Date.now() - startTime,
+          retryAttempts: attempt
+        };
+        
+      } catch (error) {
+        lastError = error;
+        
+        // Capture any output from failed attempt
+        if ((error as any).stdout || (error as any).stderr) {
+          totalOutput = (error as any).stdout || (error as any).stderr || '';
+        }
+        
+        // This was a retry if attempt > 0
+        if (attempt > 0) {
+          actualRetryCount = attempt;
+        }
+        
+        // Check if we should retry
+        if (attempt < maxRetries && this.isRetryableError(error)) {
+          const delay = this.calculateBackoffDelay(attempt);
+          
+          if (this.configManager.isVerbose()) {
+            console.log(`\n⚠️  Claude execution failed (attempt ${attempt + 1}/${maxRetries + 1})`);
+            console.log(`   Error: ${(error as any).message || 'Unknown error'}`);
+            console.log(`   Retrying in ${delay}ms...\n`);
+          }
+          
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          // No more retries or non-retryable error
+          break;
+        }
+      }
+    }
+    
+    // All retries exhausted or non-retryable error
+    const err = lastError as any;
+    
+    // Check if this is an execa error with exit code
+    if (err.exitCode !== undefined && err.exitCode !== 0) {
+      return {
+        success: false,
+        error: `Claude Code exited with code ${err.exitCode}. This is a Claude execution error, not a TodoQ error.`,
+        output: totalOutput || err.stdout || err.stderr || '',
+        duration: Date.now() - startTime,
+        iterations: 1,
+        retryAttempts: actualRetryCount
+      };
+    }
+    
+    return {
+      success: false,
+      error: err.message || 'Unknown error',
+      output: totalOutput || err.stdout || err.stderr || '',
+      duration: Date.now() - startTime,
+      iterations: 1,
+      retryAttempts: actualRetryCount
+    };
+  }
+
+  /**
+   * Execute Claude once (single attempt)
+   */
+  private async executeClaudeOnce(context: TaskContext, prompt: string): Promise<WorkTaskResult> {
     const startTime = Date.now();
     
     try {
-      const prompt = this.buildPrompt(context);
       const claudePath = await this.configManager.getClaudePath();
       const cliArgs = this.configManager.buildCliArguments();
 
@@ -235,14 +363,10 @@ export class ClaudeService {
 
       // Check if Claude exited with non-zero code
       if (result.exitCode !== 0) {
-        return {
-          success: false,
-          error: `Claude Code exited with code ${result.exitCode}. This is a Claude execution error, not a TodoQ error.`,
-          output: allOutput,
-          duration: Date.now() - startTime,
-          iterations: 1,
-          ...taskInfo
-        };
+        const error = new Error(`Claude Code exited with code ${result.exitCode}`) as any;
+        error.exitCode = result.exitCode;
+        error.stdout = allOutput;
+        throw error;
       }
 
       return {
@@ -252,29 +376,19 @@ export class ClaudeService {
         iterations: 1,
         ...taskInfo
       };
-
+      
     } catch (error) {
-      const err = error as any;
-      
-      // Check if this is an execa error with exit code
-      if (err.exitCode !== undefined && err.exitCode !== 0) {
-        return {
-          success: false,
-          error: `Claude Code exited with code ${err.exitCode}. This is a Claude execution error, not a TodoQ error.`,
-          output: err.stdout || err.stderr || '',
-          duration: Date.now() - startTime,
-          iterations: 1
-        };
-      }
-      
-      return {
-        success: false,
-        error: err.message || 'Unknown error',
-        output: err.stdout || err.stderr || '',
-        duration: Date.now() - startTime,
-        iterations: 1
-      };
+      // Re-throw the error to be handled by retry logic
+      throw error;
     }
+  }
+
+  /**
+   * Execute steps 4-8: Work on task using Claude
+   */
+  async executeTodoqNextPrompt(context: TaskContext): Promise<WorkTaskResult> {
+    const prompt = this.buildPrompt(context);
+    return this.executeClaudeWithRetry(context, prompt);
   }
 
   /**

@@ -20,6 +20,7 @@ todoq work-next [directory]
 - `--dangerously-skip-permissions` - skip permission prompts (dev mode)
 - `--continue-session` - resume most recent conversation (enables multi-turn task completion)
 - `--skip-claude-check` - skip Claude availability check
+- Retry configuration: `maxRetries`, `retryDelay`, `retryBackoffMultiplier`, `maxRetryDelay`
 
 ## Configuration
 
@@ -48,7 +49,11 @@ todoq work-next [directory]
     "disallowedTools": [],
     "customArgs": [],
     "addDir": [],
-    "appendSystemPrompt": ""
+    "appendSystemPrompt": "",
+    "maxRetries": 3,
+    "retryDelay": 2000,
+    "retryBackoffMultiplier": 2,
+    "maxRetryDelay": 15000
   }
 }
 ```

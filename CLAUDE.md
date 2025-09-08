@@ -117,7 +117,11 @@ Complete configuration options for `todoq work-next`:
     "allowedTools": ["Read", "Write", "Edit", "Bash", "Grep", "WebFetch", "WebSearch", "TodoWrite"],
     "customArgs": ["--custom-flag"],
     "continueSession": true,
-    "appendSystemPrompt": "Custom instructions for Claude to follow during task execution"
+    "appendSystemPrompt": "Custom instructions for Claude to follow during task execution",
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "retryBackoffMultiplier": 2,
+    "maxRetryDelay": 30000
   }
 }
 ```
@@ -141,6 +145,15 @@ Complete configuration options for `todoq work-next`:
 - `"dangerouslySkipPermissions": true/false` - Skip ALL permission checks (nuclear option)
 - `"allowedTools": [...]` - List of Claude Code tools to allow
 - `"customArgs": [...]` - Additional arguments to pass to Claude Code
+
+**Retry Configuration (resilient headless execution):**
+- `"maxRetries": 3` - Max retry attempts (0-10, default: 3)
+- `"retryDelay": 2000` - Initial delay in ms (default: 2000)
+- `"retryBackoffMultiplier": 2` - Backoff factor (default: 2)
+- `"maxRetryDelay": 15000` - Max delay cap in ms (default: 15000)
+
+Retries on: exit codes 1-2, timeouts. Doesn't retry on: exit code 127, permission errors, ENOENT.
+Default delays: 2s → 4s → 8s (with maxRetries: 3)
 
 **Command Line Options:**
 ```bash
@@ -193,6 +206,18 @@ todoq work-next --dangerously-skip-permissions         # Full permissions (tests
     "maxIterations": 20,
     "timeout": 300000,
     "model": "opusplan"
+  }
+}
+
+// Resilient headless execution with retries
+{
+  "claude": {
+    "enabled": true,
+    "dangerouslySkipPermissions": true,
+    "maxRetries": 10,  // Match interactive mode resilience
+    "retryDelay": 1000,
+    "retryBackoffMultiplier": 2,
+    "maxRetryDelay": 30000
   }
 }
 ```

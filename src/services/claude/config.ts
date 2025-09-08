@@ -1,4 +1,3 @@
-import { existsSync } from 'fs';
 import { homedir } from 'os';
 import path from 'path';
 import { execa } from 'execa';
@@ -12,7 +11,12 @@ export class ClaudeConfigManager {
   private claudePath: string | null = null;
 
   constructor(config?: Partial<ClaudeConfig>) {
-    this.config = { ...this.getDefaults(), ...config };
+    // Filter out undefined values from config
+    const cleanConfig = config ? Object.fromEntries(
+      Object.entries(config).filter(([_, v]) => v !== undefined)
+    ) as Partial<ClaudeConfig> : {};
+    
+    this.config = { ...this.getDefaults(), ...cleanConfig };
     this.validateConfig();
   }
 
@@ -41,7 +45,13 @@ export class ClaudeConfigManager {
       addDir: [],
       appendSystemPrompt: '',
       continueSession: true, // Needed for multi-turn task completion
-      customArgs: []
+      customArgs: [],
+      
+      // Retry Configuration
+      maxRetries: 3, // Default: 3 retries for basic resilience
+      retryDelay: 2000, // Default: 2 second initial delay
+      retryBackoffMultiplier: 2, // Default: exponential backoff with factor of 2
+      maxRetryDelay: 15000 // Default: cap at 15 seconds
     };
   }
 
@@ -75,6 +85,27 @@ export class ClaudeConfigManager {
     
     if (this.config.maxTurns !== undefined && this.config.maxTurns > 100) {
       this.config.maxTurns = 100; // Maximum 100 turns
+    }
+    
+    // Validate retry configuration
+    if (this.config.maxRetries !== undefined && this.config.maxRetries < 0) {
+      this.config.maxRetries = 0; // Minimum 0 retries
+    }
+    
+    if (this.config.maxRetries !== undefined && this.config.maxRetries > 10) {
+      this.config.maxRetries = 10; // Maximum 10 retries
+    }
+    
+    if (this.config.retryDelay !== undefined && this.config.retryDelay < 100) {
+      this.config.retryDelay = 100; // Minimum 100ms delay
+    }
+    
+    if (this.config.retryBackoffMultiplier !== undefined && this.config.retryBackoffMultiplier < 1) {
+      this.config.retryBackoffMultiplier = 1; // Minimum multiplier of 1 (no backoff)
+    }
+    
+    if (this.config.maxRetryDelay !== undefined && this.config.maxRetryDelay < this.config.retryDelay!) {
+      this.config.maxRetryDelay = this.config.retryDelay; // Max delay should be at least initial delay
     }
     
     // Ensure arrays are initialized
@@ -248,6 +279,34 @@ export class ClaudeConfigManager {
    */
   isEnabled(): boolean {
     return this.config.enabled || false;
+  }
+
+  /**
+   * Get max retries
+   */
+  getMaxRetries(): number {
+    return this.config.maxRetries || 0;
+  }
+
+  /**
+   * Get retry delay
+   */
+  getRetryDelay(): number {
+    return this.config.retryDelay || 1000;
+  }
+
+  /**
+   * Get retry backoff multiplier
+   */
+  getRetryBackoffMultiplier(): number {
+    return this.config.retryBackoffMultiplier || 2;
+  }
+
+  /**
+   * Get max retry delay
+   */
+  getMaxRetryDelay(): number {
+    return this.config.maxRetryDelay || 30000;
   }
 
   /**

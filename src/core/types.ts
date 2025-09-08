@@ -70,6 +70,11 @@ export interface TodoqConfig {
         customArgs?: string[];
         continueSession?: boolean;
         appendSystemPrompt?: string;
+        // Retry configuration
+        maxRetries?: number;
+        retryDelay?: number;
+        retryBackoffMultiplier?: number;
+        maxRetryDelay?: number;
     };
 }
 

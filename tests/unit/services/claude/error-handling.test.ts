@@ -45,7 +45,8 @@ describe('ClaudeService Error Handling', () => {
         model: 'claude-3-5-sonnet-20241022',
         verbose: false,
         streaming: false,
-        maxIterations: 3
+        maxIterations: 3,
+        maxRetries: 0 // Disable retries for error handling tests
       }
     };
 

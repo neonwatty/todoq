@@ -40,6 +40,16 @@ export interface ClaudeConfig {
   continueSession?: boolean;
   /** Any additional CLI arguments */
   customArgs?: string[];
+  
+  // Retry Configuration
+  /** Maximum number of retry attempts (default: 0, no retries) */
+  maxRetries?: number;
+  /** Initial delay between retries in milliseconds (default: 1000) */
+  retryDelay?: number;
+  /** Exponential backoff multiplier (default: 2) */
+  retryBackoffMultiplier?: number;
+  /** Maximum delay between retries in milliseconds (default: 30000) */
+  maxRetryDelay?: number;
 }
 
 /**
@@ -60,6 +70,8 @@ export interface WorkTaskResult {
   iterations: number;
   /** Output from Claude execution */
   output?: string;
+  /** Number of retry attempts made (0 if no retries) */
+  retryAttempts?: number;
 }
 
 /**
