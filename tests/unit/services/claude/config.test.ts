@@ -168,6 +168,32 @@ describe('ClaudeConfigManager', () => {
         '--debug'
       ]);
     });
+
+    it('should automatically include --verbose when outputFormat is stream-json', () => {
+      configManager = new ClaudeConfigManager({
+        outputFormat: 'stream-json',
+        verbose: false // explicitly set to false to test auto-enable
+      });
+      
+      const args = configManager.buildCliArguments();
+      
+      expect(args).toContain('--output-format');
+      expect(args).toContain('stream-json');
+      expect(args).toContain('--verbose'); // should be automatically included
+    });
+
+    it('should not duplicate --verbose when both stream-json and verbose are enabled', () => {
+      configManager = new ClaudeConfigManager({
+        outputFormat: 'stream-json',
+        verbose: true
+      });
+      
+      const args = configManager.buildCliArguments();
+      
+      // Count occurrences of --verbose
+      const verboseCount = args.filter(arg => arg === '--verbose').length;
+      expect(verboseCount).toBe(1); // should only appear once
+    });
   });
 
   describe('getter methods', () => {
@@ -187,7 +213,7 @@ describe('ClaudeConfigManager', () => {
       expect(configManager.getTimeout()).toBe(240000);
       expect(configManager.getMaxIterations()).toBe(7);
       expect(configManager.getModel()).toBe('claude-3-opus-20240229');
-      expect(configManager.isVerbose()).toBe(false);
+      expect(configManager.isVerbose()).toBe(true); // stream-json automatically enables verbose
       expect(configManager.isStreaming()).toBe(true); // stream-json enables streaming
     });
 

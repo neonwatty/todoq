@@ -198,7 +198,10 @@ export class ClaudeConfigManager {
       args.push('--output-format', this.config.outputFormat);
     }
 
-    if (this.config.verbose) {
+    // Claude Code CLI requires --verbose when using -p with --output-format=stream-json
+    // Automatically enable verbose mode for stream-json to prevent validation errors
+    const requiresVerbose = this.config.outputFormat === 'stream-json' || this.config.verbose;
+    if (requiresVerbose) {
       args.push('--verbose');
     }
 
@@ -248,9 +251,10 @@ export class ClaudeConfigManager {
 
   /**
    * Check if verbose mode is enabled
+   * Note: verbose is automatically enabled when outputFormat is 'stream-json'
    */
   isVerbose(): boolean {
-    return this.config.verbose || false;
+    return this.config.verbose || this.config.outputFormat === 'stream-json';
   }
 
   /**
