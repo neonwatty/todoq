@@ -1,6 +1,5 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { TodoqConfig, TodoqError } from '../../core/types.js';
+import { TodoqConfig } from '../../core/types.js';
 import { getDefaultConfig } from './index.js';
 
 export interface ConfigValidationResult {
@@ -243,7 +242,7 @@ export class ConfigRecovery {
      */
     private static tryRelaxedParse(content: string, options?: ConfigRecoveryOptions): string | null {
         // Remove common problematic elements
-        let relaxed = content
+        const relaxed = content
             .replace(/\/\*[\s\S]*?\*\//g, '')  // Remove /* */ comments
             .replace(/\/\/.*$/gm, '')          // Remove // comments
             .replace(/\b(\w+):/g, '"$1":')     // Quote unquoted keys
@@ -271,7 +270,7 @@ export class ConfigRecovery {
                 path: ConfigRecovery.coerceString(
                     partialConfig.database?.path,
                     defaults.database.path
-                ),
+                ) ?? defaults.database.path,
                 autoMigrate: ConfigRecovery.coerceBoolean(
                     partialConfig.database?.autoMigrate,
                     defaults.database.autoMigrate
@@ -330,8 +329,8 @@ export class ConfigRecovery {
                 model: ConfigRecovery.coerceEnum(
                     partialConfig.claude.model,
                     ['sonnet', 'opus', 'opusplan', 'haiku'] as const,
-                    defaults.claude?.model || 'opusplan'
-                ),
+                    (defaults.claude?.model as 'sonnet' | 'opus' | 'opusplan' | 'haiku') || 'opusplan'
+                ) as 'sonnet' | 'opus' | 'opusplan' | 'haiku',
                 verbose: ConfigRecovery.coerceBoolean(
                     partialConfig.claude.verbose,
                     defaults.claude?.verbose || false
@@ -344,8 +343,8 @@ export class ConfigRecovery {
                 permissionMode: ConfigRecovery.coerceEnum(
                     partialConfig.claude.permissionMode,
                     ['acceptEdits', 'bypassPermissions', 'default', 'plan'] as const,
-                    defaults.claude?.permissionMode
-                ),
+                    defaults.claude?.permissionMode || 'default'
+                ) as 'acceptEdits' | 'bypassPermissions' | 'default' | 'plan',
                 dangerouslySkipPermissions: ConfigRecovery.coerceBoolean(
                     partialConfig.claude.dangerouslySkipPermissions,
                     defaults.claude?.dangerouslySkipPermissions || false
@@ -483,7 +482,7 @@ export class ConfigRecovery {
             envConfig.claude = envConfig.claude || getDefaultConfig().claude!;
             envConfig.claude.maxIterations = ConfigRecovery.coerceNumber(
                 process.env.TODOQ_CLAUDE_MAX_ITERATIONS,
-                envConfig.claude.maxIterations,
+                envConfig.claude?.maxIterations ?? 10,
                 1, 50
             );
         }
@@ -492,7 +491,7 @@ export class ConfigRecovery {
             envConfig.claude = envConfig.claude || getDefaultConfig().claude!;
             envConfig.claude.timeout = ConfigRecovery.coerceNumber(
                 process.env.TODOQ_CLAUDE_TIMEOUT,
-                envConfig.claude.timeout,
+                envConfig.claude?.timeout ?? 180000,
                 60000, 1200000
             );
         }
@@ -502,8 +501,8 @@ export class ConfigRecovery {
             envConfig.claude.model = ConfigRecovery.coerceEnum(
                 process.env.TODOQ_CLAUDE_MODEL,
                 ['sonnet', 'opus', 'opusplan', 'haiku'] as const,
-                envConfig.claude.model
-            );
+                (envConfig.claude?.model as 'sonnet' | 'opus' | 'opusplan' | 'haiku') ?? 'opusplan'
+            ) as 'sonnet' | 'opus' | 'opusplan' | 'haiku';
         }
         
         return envConfig;

@@ -107,7 +107,7 @@ export function registerConfigCommands(program: Command): void {
     configCmd
         .command('edit')
         .description('Open config in editor')
-        .action(async (options) => {
+        .action(async (_options) => {
             try {
                 let configPath = findConfigFile();
                 

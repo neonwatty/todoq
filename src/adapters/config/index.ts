@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { TodoqConfig, TodoqError } from '../../core/types.js';
+import { TodoqConfig } from '../../core/types.js';
 
 /**
  * Load the default prompt from task-execution.md and transform it for appendSystemPrompt
