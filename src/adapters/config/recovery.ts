@@ -323,8 +323,8 @@ export class ConfigRecovery {
                 ),
                 timeout: ConfigRecovery.coerceNumber(
                     partialConfig.claude.timeout,
-                    defaults.claude?.timeout || 180000,
-                    60000, 1200000
+                    defaults.claude?.timeout || 1800000,
+                    900000, 3600000
                 ),
                 model: ConfigRecovery.coerceEnum(
                     partialConfig.claude.model,
@@ -491,8 +491,8 @@ export class ConfigRecovery {
             envConfig.claude = envConfig.claude || getDefaultConfig().claude!;
             envConfig.claude.timeout = ConfigRecovery.coerceNumber(
                 process.env.TODOQ_CLAUDE_TIMEOUT,
-                envConfig.claude?.timeout ?? 180000,
-                60000, 1200000
+                envConfig.claude?.timeout ?? 1800000,
+                900000, 3600000
             );
         }
         

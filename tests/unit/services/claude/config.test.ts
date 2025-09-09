@@ -20,7 +20,7 @@ describe('ClaudeConfigManager', () => {
       
       expect(configManager.isEnabled()).toBe(false);
       expect(configManager.getMaxIterations()).toBe(10);
-      expect(configManager.getTimeout()).toBe(300000);
+      expect(configManager.getTimeout()).toBe(1800000);
       expect(configManager.getModel()).toBe('opusplan');
       expect(configManager.isVerbose()).toBe(true);
       expect(configManager.isStreaming()).toBe(false);
@@ -37,7 +37,7 @@ describe('ClaudeConfigManager', () => {
       configManager = new ClaudeConfigManager(customConfig);
       
       expect(configManager.isEnabled()).toBe(true);
-      expect(configManager.getTimeout()).toBe(240000);
+      expect(configManager.getTimeout()).toBe(900000);
       expect(configManager.getModel()).toBe('claude-3-opus-20240229');
       expect(configManager.isVerbose()).toBe(false);
       // Should still use defaults for unspecified values
@@ -47,14 +47,14 @@ describe('ClaudeConfigManager', () => {
   });
 
   describe('configuration validation', () => {
-    it('should enforce minimum testTimeout of 60000ms', () => {
+    it('should enforce minimum testTimeout of 900000ms', () => {
       configManager = new ClaudeConfigManager({ testTimeout: 30000 });
-      expect(configManager.getTimeout()).toBe(60000);
+      expect(configManager.getTimeout()).toBe(900000);
     });
 
-    it('should enforce maximum testTimeout of 1200000ms', () => {
-      configManager = new ClaudeConfigManager({ testTimeout: 1500000 });
-      expect(configManager.getTimeout()).toBe(1200000);
+    it('should enforce maximum testTimeout of 3600000ms', () => {
+      configManager = new ClaudeConfigManager({ testTimeout: 4000000 });
+      expect(configManager.getTimeout()).toBe(3600000);
     });
 
     it('should enforce minimum maxIterations of 1', () => {
@@ -68,8 +68,8 @@ describe('ClaudeConfigManager', () => {
     });
 
     it('should accept valid testTimeout values', () => {
-      configManager = new ClaudeConfigManager({ testTimeout: 180000 });
-      expect(configManager.getTimeout()).toBe(180000);
+      configManager = new ClaudeConfigManager({ testTimeout: 1200000 });
+      expect(configManager.getTimeout()).toBe(1200000);
     });
 
     it('should accept valid maxIterations values', () => {
@@ -210,7 +210,7 @@ describe('ClaudeConfigManager', () => {
       configManager = new ClaudeConfigManager(config);
       
       expect(configManager.isEnabled()).toBe(true);
-      expect(configManager.getTimeout()).toBe(240000);
+      expect(configManager.getTimeout()).toBe(900000);
       expect(configManager.getMaxIterations()).toBe(7);
       expect(configManager.getModel()).toBe('claude-3-opus-20240229');
       expect(configManager.isVerbose()).toBe(true); // stream-json automatically enables verbose
@@ -228,7 +228,7 @@ describe('ClaudeConfigManager', () => {
       const fullConfig = configManager.getConfig();
       
       expect(fullConfig.enabled).toBe(true);
-      expect(fullConfig.testTimeout).toBe(120000);
+      expect(fullConfig.testTimeout).toBe(900000);
       expect(fullConfig.model).toBe('sonnet');
       // Should include defaults for unspecified values
       expect(fullConfig.maxIterations).toBe(10);

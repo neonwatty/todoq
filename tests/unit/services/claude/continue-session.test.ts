@@ -170,7 +170,7 @@ describe('continueSession Configuration', () => {
       const configManager = new ClaudeConfigManager({
         continueSession: true,
         maxTurns: 5,
-        testTimeout: 300000
+        testTimeout: 1800000
       });
       
       const args = configManager.buildCliArguments();

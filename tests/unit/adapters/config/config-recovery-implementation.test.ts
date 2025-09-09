@@ -162,7 +162,7 @@ describe('ConfigRecovery Implementation', () => {
             const partial = {
                 claude: {
                     maxIterations: "15" as any,
-                    timeout: "300000" as any,
+                    timeout: "1500000" as any,
                     retryDelay: "1000" as any
                 }
             };
@@ -170,7 +170,7 @@ describe('ConfigRecovery Implementation', () => {
             const normalized = ConfigRecovery.validateAndNormalize(partial);
             
             expect(normalized.claude?.maxIterations).toBe(15);
-            expect(normalized.claude?.timeout).toBe(300000);
+            expect(normalized.claude?.timeout).toBe(1500000);
             expect(normalized.claude?.retryDelay).toBe(1000);
             expect(typeof normalized.claude?.maxIterations).toBe('number');
         });
@@ -179,7 +179,7 @@ describe('ConfigRecovery Implementation', () => {
             const partial = {
                 claude: {
                     maxIterations: -5,     // Below minimum
-                    timeout: 2000000,      // Above maximum
+                    timeout: 4000000,      // Above maximum
                     retryDelay: -100       // Below minimum
                 }
             };
@@ -187,7 +187,7 @@ describe('ConfigRecovery Implementation', () => {
             const normalized = ConfigRecovery.validateAndNormalize(partial);
             
             expect(normalized.claude?.maxIterations).toBe(1);        // Minimum enforced
-            expect(normalized.claude?.timeout).toBe(1200000);        // Maximum enforced
+            expect(normalized.claude?.timeout).toBe(3600000);        // Maximum enforced
             expect(normalized.claude?.retryDelay).toBe(0);           // Minimum enforced
             
             expect(consoleSpy.warn).toHaveBeenCalledWith(expect.stringContaining('below minimum'));
@@ -289,7 +289,7 @@ describe('ConfigRecovery Implementation', () => {
             
             expect(overridden.claude?.enabled).toBe(true);
             expect(overridden.claude?.maxIterations).toBe(25);
-            expect(overridden.claude?.timeout).toBe(600000);
+            expect(overridden.claude?.timeout).toBe(900000);
             expect(overridden.claude?.model).toBe('opus');
         });
 
@@ -330,7 +330,7 @@ describe('ConfigRecovery Implementation', () => {
             const overridden = ConfigRecovery.applyEnvironmentOverrides(config);
             
             expect(overridden.claude?.maxIterations).toBe(50);    // Capped at max
-            expect(overridden.claude?.timeout).toBe(60000);       // Raised to min
+            expect(overridden.claude?.timeout).toBe(900000);       // Raised to min
             
             expect(consoleSpy.warn).toHaveBeenCalledWith(expect.stringContaining('above maximum'));
             expect(consoleSpy.warn).toHaveBeenCalledWith(expect.stringContaining('below minimum'));

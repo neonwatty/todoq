@@ -8,7 +8,7 @@ export interface ClaudeConfig {
   claudePath?: string;
   /** Maximum iterations for Claude execution */
   maxIterations?: number;
-  /** Test timeout in milliseconds (1-20 minutes: 60000-1200000ms) */
+  /** Test timeout in milliseconds (15-60 minutes: 900000-3600000ms) */
   testTimeout?: number;
   
   // Security & Permissions

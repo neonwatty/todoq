@@ -27,7 +27,7 @@ export class ClaudeConfigManager {
     return {
       enabled: false,
       maxIterations: 10,
-      testTimeout: 300000, // 5 minutes (300000ms within 1-10 min range)
+      testTimeout: 1800000, // 30 minutes default (1800000ms)
       
       // Security & Permissions
       dangerouslySkipPermissions: true, // Skip all permission prompts for full automation
@@ -59,13 +59,13 @@ export class ClaudeConfigManager {
    * Validate configuration values (matching tfq validation)
    */
   private validateConfig(): void {
-    // Validate testTimeout (1-20 minutes: 60000-1200000ms)
+    // Validate testTimeout (15-60 minutes: 900000-3600000ms)
     if (this.config.testTimeout !== undefined) {
-      if (this.config.testTimeout < 60000) {
-        this.config.testTimeout = 60000; // Minimum 1 minute
+      if (this.config.testTimeout < 900000) {
+        this.config.testTimeout = 900000; // Minimum 15 minutes
       }
-      if (this.config.testTimeout > 1200000) {
-        this.config.testTimeout = 1200000; // Maximum 20 minutes
+      if (this.config.testTimeout > 3600000) {
+        this.config.testTimeout = 3600000; // Maximum 60 minutes
       }
     }
     
@@ -246,7 +246,7 @@ export class ClaudeConfigManager {
    * Get timeout value (using testTimeout for tfq compatibility)
    */
   getTimeout(): number {
-    return this.config.testTimeout || 300000; // Default 5 minutes
+    return this.config.testTimeout || 1800000; // Default 30 minutes
   }
 
   /**

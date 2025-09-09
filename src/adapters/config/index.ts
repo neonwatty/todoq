@@ -158,7 +158,7 @@ export function getDefaultConfig(): TodoqConfig {
         claude: {
             enabled: true,
             maxIterations: 10,
-            timeout: 180000, // 3 minutes
+            timeout: 1800000, // 30 minutes
             model: 'opusplan',
             verbose: false,
             outputFormat: 'stream-json',
@@ -362,7 +362,7 @@ export class ConfigManager {
         return this.config.claude || {
             enabled: false,
             maxIterations: 3,
-            timeout: 180000,
+            timeout: 1800000,
             model: 'sonnet-4',
             verbose: false,
             streaming: false,
@@ -384,7 +384,7 @@ export class ConfigManager {
     }
 
     public getClaudeTimeout(): number {
-        return this.config.claude?.timeout || 180000;
+        return this.config.claude?.timeout || 1800000;
     }
 
     public getClaudeModel(): string {

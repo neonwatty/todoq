@@ -8,7 +8,7 @@ export function registerWorkNextCommands(program: Command): void {
     .command('work-next')
     .description('Work on next task using Claude')
     .argument('[directory]', 'project directory', process.cwd())
-    .option('--test-timeout <ms>', 'execution timeout in milliseconds (60000-1200000)')
+    .option('--test-timeout <ms>', 'execution timeout in milliseconds (900000-3600000)')
     .option('--max-iterations <num>', 'maximum Claude iterations (1-50)')
     .option('--max-turns <num>', 'maximum conversation turns (1-100)')
     .option('--model <model>', 'Claude model (sonnet|opus|opusplan|haiku)')
@@ -131,7 +131,19 @@ export function registerWorkNextCommands(program: Command): void {
           console.error(chalk.red('✗ Task work failed'));
           
           // Check if this is a Claude-specific error
-          if (result.error?.includes('Claude Code exited with code')) {
+          if (result.error?.includes('exit code 143') || result.error?.includes('SIGTERM')) {
+            console.error(chalk.yellow('\n⚠️  Claude Code Timeout (Exit Code 143)'));
+            console.error(chalk.yellow('Claude was terminated, likely due to exceeding the timeout limit.'));
+            console.error(chalk.gray('\nThis can happen when:'));
+            console.error(chalk.gray('• The task is very complex or requires analyzing many files'));
+            console.error(chalk.gray('• The system is under heavy load'));
+            console.error(chalk.gray('• The timeout setting is too low for this task'));
+            console.error(chalk.gray('\nPossible solutions:'));
+            console.error(chalk.gray('• Increase timeout: todoq work-next --test-timeout 600000 (10 minutes)'));
+            console.error(chalk.gray('• Break the task into smaller subtasks'));
+            console.error(chalk.gray('• Run with --verbose to see where Claude gets stuck'));
+            console.error(chalk.gray('• Check system resources with: free -h'));
+          } else if (result.error?.includes('Claude Code exited with code')) {
             console.error(chalk.yellow('\n⚠️  Claude Code Error'));
             console.error(chalk.yellow(result.error));
             console.error(chalk.gray('\nThis indicates Claude encountered an issue during task execution.'));
