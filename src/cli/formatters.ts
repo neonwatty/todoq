@@ -123,14 +123,15 @@ function formatTaskTree(tasks: Task[], config: TodoqConfig, detailed: boolean = 
             lines.push(line);
         }
         
-        // Find and render children
+        // Find and render children (already sorted from database)
         const children = tasks.filter(t => t.parentId === task.id);
-        for (const child of children.sort((a, b) => a.taskNumber.localeCompare(b.taskNumber))) {
+        for (const child of children) {
             renderTask(child, level + 1);
         }
     }
     
-    for (const rootTask of rootTasks.sort((a, b) => a.taskNumber.localeCompare(b.taskNumber))) {
+    // Root tasks are already sorted from database, don't re-sort
+    for (const rootTask of rootTasks) {
         renderTask(rootTask);
     }
     

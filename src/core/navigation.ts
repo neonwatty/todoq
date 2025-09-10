@@ -11,13 +11,19 @@ export class NavigationService {
         this.taskService = new TaskService(db);
     }
 
-    // Get current task (first incomplete task)
+    // Get current task (first incomplete task with met dependencies)
     getCurrentTask(): Task | null {
         try {
             const stmt = this.db.prepare(`
-                SELECT * FROM tasks 
-                WHERE status IN ('pending', 'in_progress')
-                ORDER BY task_number
+                SELECT t.* FROM tasks t
+                WHERE t.status IN ('pending', 'in_progress')
+                AND NOT EXISTS (
+                    SELECT 1 FROM task_dependencies td
+                    JOIN tasks dep ON td.depends_on_id = dep.id
+                    WHERE td.task_id = t.id 
+                    AND dep.status != 'completed'
+                )
+                ORDER BY t.major_number, t.minor_number
                 LIMIT 1
             `);
 
@@ -32,7 +38,7 @@ export class NavigationService {
         }
     }
 
-    // Get next incomplete task after given task number
+    // Get next incomplete task after given task number (with met dependencies)
     getNextTask(currentTaskNumber?: string): Task | null {
         try {
             if (!currentTaskNumber) {
@@ -40,10 +46,16 @@ export class NavigationService {
             }
 
             const stmt = this.db.prepare(`
-                SELECT * FROM tasks 
-                WHERE status IN ('pending', 'in_progress')
-                AND task_number > ?
-                ORDER BY task_number
+                SELECT t.* FROM tasks t
+                WHERE t.status IN ('pending', 'in_progress')
+                AND t.task_number > ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM task_dependencies td
+                    JOIN tasks dep ON td.depends_on_id = dep.id
+                    WHERE td.task_id = t.id 
+                    AND dep.status != 'completed'
+                )
+                ORDER BY t.major_number, t.minor_number
                 LIMIT 1
             `);
 
@@ -69,7 +81,7 @@ export class NavigationService {
                 SELECT * FROM tasks 
                 WHERE status IN ('pending', 'in_progress')
                 AND task_number < ?
-                ORDER BY task_number DESC
+                ORDER BY major_number DESC, minor_number DESC
                 LIMIT 1
             `);
 
@@ -129,7 +141,7 @@ export class NavigationService {
                     INNER JOIN task_tree tt ON t.parent_id = tt.id
                 )
                 SELECT * FROM task_tree 
-                ORDER BY task_number
+                ORDER BY major_number, minor_number
             `;
 
             const stmt = this.db.prepare(query);
@@ -179,6 +191,8 @@ export class NavigationService {
                     SELECT 
                         p.id,
                         p.task_number,
+                        p.major_number,
+                        p.minor_number,
                         p.name,
                         p.status,
                         COUNT(c.id) as total_children,
@@ -191,10 +205,10 @@ export class NavigationService {
                         END as completion_percentage
                     FROM tasks p
                     LEFT JOIN tasks c ON c.parent_id = p.id
-                    GROUP BY p.id, p.task_number, p.name, p.status
+                    GROUP BY p.id, p.task_number, p.major_number, p.minor_number, p.name, p.status
                 )
                 SELECT * FROM task_completion
-                ORDER BY task_number
+                ORDER BY major_number, minor_number
             `);
 
             const rows = stmt.all() as any[];
@@ -224,7 +238,7 @@ export class NavigationService {
                 WHERE task_number LIKE ? 
                 OR name LIKE ? 
                 OR description LIKE ?
-                ORDER BY task_number
+                ORDER BY major_number, minor_number
             `);
 
             const searchPattern = `%${query}%`;
@@ -256,7 +270,7 @@ export class NavigationService {
                 SELECT t.* FROM tasks t
                 INNER JOIN task_dependencies td ON t.id = td.depends_on_id
                 WHERE td.task_id = ?
-                ORDER BY t.task_number
+                ORDER BY t.major_number, t.minor_number
             `);
 
             const rows = stmt.all(task.id) as any[];
@@ -289,7 +303,7 @@ export class NavigationService {
                 SELECT t.* FROM tasks t
                 INNER JOIN task_dependencies td ON t.id = td.task_id
                 WHERE td.depends_on_id = ?
-                ORDER BY t.task_number
+                ORDER BY t.major_number, t.minor_number
             `);
 
             const rows = stmt.all(task.id) as any[];
@@ -300,6 +314,92 @@ export class NavigationService {
             }
             throw new TodoqError(
                 'Failed to get dependent tasks',
+                'NAVIGATION_ERROR',
+                { taskNumber, error }
+            );
+        }
+    }
+
+    // Get all tasks blocked by dependencies
+    getBlockedTasks(): Task[] {
+        try {
+            const stmt = this.db.prepare(`
+                SELECT DISTINCT t.* FROM tasks t
+                WHERE t.status IN ('pending', 'in_progress')
+                AND EXISTS (
+                    SELECT 1 FROM task_dependencies td
+                    JOIN tasks dep ON td.depends_on_id = dep.id
+                    WHERE td.task_id = t.id 
+                    AND dep.status != 'completed'
+                )
+                ORDER BY t.major_number, t.minor_number
+            `);
+            
+            const rows = stmt.all() as any[];
+            return rows.map(row => this.mapRowToTask(row));
+        } catch (error) {
+            throw new TodoqError(
+                'Failed to get blocked tasks',
+                'NAVIGATION_ERROR',
+                { error }
+            );
+        }
+    }
+
+    // Get tasks that are ready to work on (no blockers)
+    getReadyTasks(): Task[] {
+        try {
+            const stmt = this.db.prepare(`
+                SELECT t.* FROM tasks t
+                WHERE t.status IN ('pending', 'in_progress')
+                AND NOT EXISTS (
+                    SELECT 1 FROM task_dependencies td
+                    JOIN tasks dep ON td.depends_on_id = dep.id
+                    WHERE td.task_id = t.id 
+                    AND dep.status != 'completed'
+                )
+                ORDER BY t.major_number, t.minor_number
+            `);
+            
+            const rows = stmt.all() as any[];
+            return rows.map(row => this.mapRowToTask(row));
+        } catch (error) {
+            throw new TodoqError(
+                'Failed to get ready tasks',
+                'NAVIGATION_ERROR',
+                { error }
+            );
+        }
+    }
+
+    // Check if a specific task can be started
+    canStartTask(taskNumber: string): { canStart: boolean; blockers: string[] } {
+        try {
+            const task = this.taskService.findByNumber(taskNumber);
+            if (!task) {
+                throw new TodoqError(`Task ${taskNumber} not found`, 'TASK_NOT_FOUND');
+            }
+
+            const stmt = this.db.prepare(`
+                SELECT dep.task_number, dep.name, dep.status
+                FROM task_dependencies td
+                JOIN tasks dep ON td.depends_on_id = dep.id
+                WHERE td.task_id = ?
+                AND dep.status != 'completed'
+            `);
+            
+            const blockers = stmt.all(task.id) as Array<{ task_number: string; name: string; status: string }>;
+            
+            return {
+                canStart: blockers.length === 0,
+                blockers: blockers.map(b => `${b.task_number} ${b.name} (${b.status})`)
+            };
+        } catch (error) {
+            if (error instanceof TodoqError) {
+                throw error;
+            }
+            throw new TodoqError(
+                'Failed to check task dependencies',
                 'NAVIGATION_ERROR',
                 { taskNumber, error }
             );

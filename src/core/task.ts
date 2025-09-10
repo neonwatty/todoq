@@ -50,16 +50,21 @@ export class TaskService {
                 parentId = parent.id;
             }
 
+            // Parse task number for numerical sorting
+            const [majorNum, minorNum] = this.parseTaskNumber(input.number);
+
             const stmt = this.db.prepare(`
                 INSERT INTO tasks (
-                    parent_id, task_number, name, description, docs_references,
+                    parent_id, task_number, major_number, minor_number, name, description, docs_references,
                     testing_strategy, status, priority, files, notes, completion_notes
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             const result = stmt.run(
                 parentId || null,
                 input.number,
+                majorNum,
+                minorNum,
                 input.name,
                 input.description || null,
                 input.docs_references ? JSON.stringify(input.docs_references) : null,
@@ -321,7 +326,7 @@ export class TaskService {
                 query += ` WHERE ${  conditions.join(' AND ')}`;
             }
 
-            query += ' ORDER BY task_number';
+            query += ' ORDER BY major_number, minor_number';
 
             const stmt = this.db.prepare(query);
             const rows = stmt.all(...values) as any[];
@@ -552,7 +557,7 @@ export class TaskService {
                 FROM tasks t
                 INNER JOIN task_dependencies td ON t.id = td.depends_on_id
                 WHERE td.task_id = ?
-                ORDER BY t.task_number
+                ORDER BY t.major_number, t.minor_number
             `);
             
             const rows = stmt.all(taskId) as Array<{ task_number: string }>;
@@ -561,5 +566,13 @@ export class TaskService {
             // Return empty array if there's an error fetching dependencies
             return [];
         }
+    }
+
+    // Helper method to parse task number into major and minor components
+    private parseTaskNumber(taskNumber: string): [number, number] {
+        const parts = taskNumber.split('.');
+        const major = parseInt(parts[0], 10) || 0;
+        const minor = parts.length > 1 ? parseInt(parts[1], 10) || 0 : 0;
+        return [major, minor];
     }
 }

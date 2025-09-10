@@ -150,6 +150,35 @@ export class MigrationManager {
                         UPDATE config SET updated_at = CURRENT_TIMESTAMP WHERE key = NEW.key;
                     END;
                 `
+            },
+            {
+                version: 6,
+                name: 'Add numerical sorting columns',
+                sql: `
+                    -- Add numerical columns for proper sorting
+                    ALTER TABLE tasks ADD COLUMN major_number INTEGER;
+                    ALTER TABLE tasks ADD COLUMN minor_number INTEGER;
+                    
+                    -- Populate from existing task_number "10.2" format
+                    UPDATE tasks 
+                    SET major_number = CAST(
+                            CASE 
+                                WHEN INSTR(task_number, '.') > 0 
+                                THEN SUBSTR(task_number, 1, INSTR(task_number, '.') - 1)
+                                ELSE task_number
+                            END AS INTEGER
+                        ),
+                        minor_number = CAST(
+                            CASE 
+                                WHEN INSTR(task_number, '.') > 0 
+                                THEN SUBSTR(task_number, INSTR(task_number, '.') + 1)
+                                ELSE '0'
+                            END AS INTEGER
+                        );
+                    
+                    -- Create index for performance
+                    CREATE INDEX idx_task_ordering ON tasks(major_number, minor_number);
+                `
             }
         ];
     }

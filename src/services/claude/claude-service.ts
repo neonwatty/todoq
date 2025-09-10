@@ -293,6 +293,19 @@ export class ClaudeService {
     
     // Check if this is an execa error with exit code
     if (err.exitCode !== undefined && err.exitCode !== 0) {
+      // Special handling for exit code 143 (SIGTERM)
+      if (err.exitCode === 143) {
+        return {
+          success: false,
+          error: `Claude Code terminated with SIGTERM (exit code 143). This usually means the process exceeded the timeout limit or was interrupted by the system.`,
+          output: totalOutput || err.stdout || err.stderr || '',
+          duration: Date.now() - startTime,
+          iterations: 1,
+          retryAttempts: actualRetryCount
+        };
+      }
+      
+      // Generic exit code error for other codes
       return {
         success: false,
         error: `Claude Code exited with code ${err.exitCode}. This is a Claude execution error, not a TodoQ error.`,
@@ -370,7 +383,11 @@ export class ClaudeService {
 
       // Check if Claude exited with non-zero code
       if (result.exitCode !== 0) {
-        const error = new Error(`Claude Code exited with code ${result.exitCode}`) as any;
+        const error = new Error(
+          result.exitCode === 143 
+            ? `Claude Code terminated with SIGTERM (exit code 143) - likely timeout or system interruption`
+            : `Claude Code exited with code ${result.exitCode}`
+        ) as any;
         error.exitCode = result.exitCode;
         error.stdout = allOutput;
         throw error;

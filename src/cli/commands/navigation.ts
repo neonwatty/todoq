@@ -46,10 +46,30 @@ export function registerNavigationCommands(program: Command): void {
                         return;
                     }
                     
+                    // Check if there are blocked tasks
+                    const blockedTasks = navigationService.getBlockedTasks();
+                    
                     if (options.json) {
-                        console.log(JSON.stringify({ message: 'No current task found' }));
+                        console.log(JSON.stringify({ 
+                            message: 'No current task found',
+                            blockedTasks: blockedTasks.length
+                        }));
                     } else {
-                        console.log(chalk.yellow('No current task found. All tasks might be completed!'));
+                        if (blockedTasks.length > 0) {
+                            console.log(chalk.red(`❌ No tasks available. ${blockedTasks.length} task${blockedTasks.length === 1 ? ' is' : 's are'} blocked by dependencies:`));
+                            for (const task of blockedTasks.slice(0, 5)) {
+                                const blockInfo = navigationService.canStartTask(task.taskNumber);
+                                console.log(chalk.yellow(`  🔒 ${task.taskNumber} ${task.name}`));
+                                if (blockInfo.blockers.length > 0) {
+                                    console.log(chalk.gray(`     Blocked by: ${blockInfo.blockers[0]}`));
+                                }
+                            }
+                            if (blockedTasks.length > 5) {
+                                console.log(chalk.gray(`  ... and ${blockedTasks.length - 5} more`));
+                            }
+                        } else {
+                            console.log(chalk.yellow('No current task found. All tasks might be completed!'));
+                        }
                     }
                     return;
                 }
@@ -244,7 +264,6 @@ export function registerNavigationCommands(program: Command): void {
         .option('--json', 'output as JSON')
         .option('--root <number>', 'root task number to show progress for')
         .action(async (options) => {
-            const config = options._config as TodoqConfig;
             const navigationService = options._navigationService as NavigationService;
 
             try {
@@ -306,6 +325,118 @@ export function registerNavigationCommands(program: Command): void {
                     for (const task of results) {
                         console.log(formatTask(task, config, { compact: true }));
                         console.log('');
+                    }
+                }
+            } catch (error) {
+                throw error;
+            }
+        });
+
+    // Show task dependencies
+    program
+        .command('deps <task>')
+        .description('Show dependencies for a task')
+        .option('--json', 'output as JSON')
+        .action(async (taskNumber, options) => {
+            const navigationService = options._navigationService as NavigationService;
+
+            try {
+                const dependencies = navigationService.getTaskDependencies(taskNumber);
+                const dependents = navigationService.getDependentTasks(taskNumber);
+
+                if (options.json) {
+                    console.log(JSON.stringify({ dependencies, dependents }, null, 2));
+                } else {
+                    console.log(chalk.bold(`\nDependencies for ${taskNumber}:\n`));
+                    
+                    if (dependencies.length > 0) {
+                        console.log(chalk.yellow('Dependencies (must be completed first):'));
+                        for (const dep of dependencies) {
+                            const icon = dep.status === 'completed' ? '✅' : '❌';
+                            console.log(`  ${icon} ${dep.taskNumber} ${dep.name} (${dep.status})`);
+                        }
+                    } else {
+                        console.log(chalk.gray('  No dependencies'));
+                    }
+
+                    console.log();
+                    
+                    if (dependents.length > 0) {
+                        console.log(chalk.blue('Dependent tasks (waiting on this task):'));
+                        for (const dep of dependents) {
+                            const icon = dep.status === 'completed' ? '✅' : '⏳';
+                            console.log(`  ${icon} ${dep.taskNumber} ${dep.name} (${dep.status})`);
+                        }
+                    } else {
+                        console.log(chalk.gray('  No dependent tasks'));
+                    }
+                }
+            } catch (error) {
+                throw error;
+            }
+        });
+
+    // List blocked tasks
+    program
+        .command('blocked')
+        .description('List tasks blocked by dependencies')
+        .option('--json', 'output as JSON')
+        .action(async (options) => {
+            const navigationService = options._navigationService as NavigationService;
+
+            try {
+                const blockedTasks = navigationService.getBlockedTasks();
+
+                if (options.json) {
+                    const tasksWithBlockers = blockedTasks.map(task => {
+                        const blockInfo = navigationService.canStartTask(task.taskNumber);
+                        return {
+                            ...task,
+                            blockers: blockInfo.blockers
+                        };
+                    });
+                    console.log(JSON.stringify(tasksWithBlockers, null, 2));
+                } else {
+                    if (blockedTasks.length === 0) {
+                        console.log(chalk.green('No blocked tasks'));
+                    } else {
+                        console.log(chalk.bold(`\n${blockedTasks.length} Blocked Tasks:\n`));
+                        for (const task of blockedTasks) {
+                            const blockInfo = navigationService.canStartTask(task.taskNumber);
+                            console.log(chalk.yellow(`🔒 ${task.taskNumber} ${task.name}`));
+                            if (blockInfo.blockers.length > 0) {
+                                console.log(chalk.gray(`   Waiting on: ${blockInfo.blockers.join(', ')}`));
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                throw error;
+            }
+        });
+
+    // List ready tasks
+    program
+        .command('ready')
+        .description('List tasks ready to work on (no blockers)')
+        .option('--json', 'output as JSON')
+        .action(async (options) => {
+            const navigationService = options._navigationService as NavigationService;
+
+            try {
+                const readyTasks = navigationService.getReadyTasks();
+
+                if (options.json) {
+                    console.log(JSON.stringify(readyTasks, null, 2));
+                } else {
+                    if (readyTasks.length === 0) {
+                        console.log(chalk.yellow('No tasks ready to work on'));
+                    } else {
+                        console.log(chalk.bold(`\n${readyTasks.length} Ready Tasks:\n`));
+                        for (const task of readyTasks) {
+                            const icon = task.status === 'in_progress' ? '→' : '○';
+                            console.log(chalk.green(`${icon} ${task.taskNumber} ${task.name} (${task.status})`));
+                        }
                     }
                 }
             } catch (error) {

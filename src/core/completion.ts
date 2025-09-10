@@ -74,6 +74,8 @@ export class CompletionService {
                     SELECT 
                         p.id,
                         p.task_number,
+                        p.major_number,
+                        p.minor_number,
                         p.name,
                         p.status,
                         p.parent_id,
@@ -87,10 +89,10 @@ export class CompletionService {
                         END as completion_percentage
                     FROM tasks p
                     LEFT JOIN tasks c ON c.parent_id = p.id
-                    GROUP BY p.id, p.task_number, p.name, p.status, p.parent_id
+                    GROUP BY p.id, p.task_number, p.major_number, p.minor_number, p.name, p.status, p.parent_id
                 )
                 SELECT * FROM task_completion
-                ORDER BY task_number
+                ORDER BY major_number, minor_number
             `);
 
             const rows = stmt.all() as any[];
@@ -180,7 +182,7 @@ export class CompletionService {
                 SELECT t.* FROM tasks t
                 INNER JOIN task_dependencies td ON t.id = td.task_id
                 WHERE td.depends_on_id = ?
-                ORDER BY t.task_number
+                ORDER BY t.major_number, t.minor_number
             `);
 
             const rows = stmt.all(task.id) as any[];
