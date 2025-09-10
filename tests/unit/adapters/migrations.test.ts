@@ -55,7 +55,7 @@ describe('MigrationManager', () => {
                 SELECT version, name FROM migrations ORDER BY version
             `).all() as Array<{ version: number; name: string }>;
 
-            expect(appliedMigrations).toHaveLength(5); // Check expected number of migrations
+            expect(appliedMigrations).toHaveLength(6); // Check expected number of migrations (including numerical sorting)
             expect(appliedMigrations[0].version).toBe(1);
             expect(appliedMigrations[0].name).toBe('Create tasks table');
         });

@@ -71,7 +71,12 @@ describe('Navigation Commands', () => {
             getPreviousTask: vi.fn(),
             getRemainingTaskCount: vi.fn(),
             getTaskProgress: vi.fn(),
-            searchTasks: vi.fn()
+            searchTasks: vi.fn(),
+            getBlockedTasks: vi.fn(() => []),
+            getReadyTasks: vi.fn(() => []),
+            canStartTask: vi.fn(() => ({ canStart: true, blockers: [] })),
+            getTaskDependencies: vi.fn(() => []),
+            getDependentTasks: vi.fn(() => [])
         };
 
         mockTaskService = {
