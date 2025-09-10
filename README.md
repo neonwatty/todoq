@@ -6,8 +6,8 @@ A comprehensive TypeScript CLI tool that transforms hierarchical task systems in
 
 - [Overview](#overview)
 - [Essential Commands](#essential-commands)
+- [Command Aliases](#command-aliases)
 - [How It Works](#how-it-works)
-- [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Usage](#usage)
@@ -16,12 +16,15 @@ A comprehensive TypeScript CLI tool that transforms hierarchical task systems in
   - [Listing & Querying](#listing--querying)
   - [JSON Import/Export](#json-importexport)
   - [Configuration](#configuration)
+- [Interactive Features](#interactive-features)
+- [Detailed Task Views](#detailed-task-views)
 - [CLI Commands](#cli-commands)
 - [Task JSON Schema](#task-json-schema)
 - [Configuration](#configuration-1)
 - [Architecture](#architecture)
 - [Database Schema](#database-schema)
-- [Advanced Features](#advanced-features)
+- [Claude Code Integration](#claude-code-integration)
+- [Testing](#testing)
 
 ## Overview
 
@@ -503,33 +506,6 @@ TodoQ uses SQLite with the following main tables:
 - **migrations**: Migration tracking
 
 The database uses WAL mode for better concurrency and includes proper indexes for performance.
-
-## Advanced Features
-
-### Parent-Child Completion
-
-TodoQ automatically calculates completion percentages for parent tasks based on their children's status. When all child tasks are completed, the parent task is automatically marked as completed.
-
-### Dependency Management
-
-Tasks can depend on other tasks. TodoQ validates that:
-- All dependencies exist
-- No circular dependencies are created
-- Tasks cannot be completed until all dependencies are completed
-
-### Git Integration
-
-When tasks are completed, TodoQ can automatically:
-- Track which files were modified during task execution
-- Link file changes to task completion records
-
-### Bulk Operations
-
-TodoQ supports efficient bulk operations with:
-- Transaction-based imports for data integrity
-- Detailed validation and error reporting
-- Rollback on failures
-- Progress tracking for large imports
 
 ## Claude Code Integration
 
