@@ -119,7 +119,7 @@ Complete configuration options for `todoq work-next`:
     "continueSession": true,
     "appendSystemPrompt": "Custom instructions for Claude to follow during task execution",
     "maxRetries": 3,
-    "retryDelay": 1000,
+    "retryDelay": 2000,
     "retryBackoffMultiplier": 2,
     "maxRetryDelay": 30000
   }
@@ -215,7 +215,7 @@ todoq work-next --dangerously-skip-permissions         # Full permissions (tests
     "enabled": true,
     "dangerouslySkipPermissions": true,
     "maxRetries": 10,  // Match interactive mode resilience
-    "retryDelay": 1000,
+    "retryDelay": 2000,
     "retryBackoffMultiplier": 2,
     "maxRetryDelay": 30000
   }

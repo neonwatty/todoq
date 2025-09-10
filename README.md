@@ -539,7 +539,7 @@ TodoQ integrates with Claude Code for AI-powered task execution. The `work-next`
 {
   "claude": {
     "maxRetries": 10,        // Retry up to 10 times
-    "retryDelay": 1000,      // Start with 1s delay
+    "retryDelay": 2000,      // Start with 2s delay
     "retryBackoffMultiplier": 2,  // Double each retry
     "maxRetryDelay": 30000   // Cap at 30s
   }
