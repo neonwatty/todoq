@@ -1,0 +1,14 @@
+{
+  "tasks": [
+    {
+      "number": "99.0",
+      "name": "Create test file for JSON formatter",
+      "description": "Create a simple test file in sandbox directory to verify JSON formatter is working",
+      "parent": null,
+      "status": "pending",
+      "priority": 1,
+      "files": ["sandbox/test-formatter.txt"],
+      "testing_strategy": "Manual verification that file is created with correct content"
+    }
+  ]
+}

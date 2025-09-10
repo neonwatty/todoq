@@ -12,6 +12,7 @@ export function registerTaskCommands(program: Command): void {
         .alias('get')
         .description('Show detailed task view')
         .argument('<number>', 'task number')
+        .option('--json', 'output as JSON')
         .action(async (taskNumber, options) => {
             const config = options._config as TodoqConfig;
             const taskService = options._taskService as TaskService;
@@ -50,6 +51,7 @@ export function registerTaskCommands(program: Command): void {
         .option('--priority <priority>', 'task priority (0-10)', '0')
         .option('-s, --status <status>', 'task status', 'pending')
         .option('--notes <notes>', 'task notes')
+        .option('--json', 'output as JSON')
         .action(async (taskNumber, name, options) => {
             const taskService = options._taskService as TaskService;
 

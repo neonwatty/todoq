@@ -6,6 +6,7 @@ import { registerListCommands } from './list.js';
 import { registerImportExportCommands } from './import-export.js';
 import { registerConfigCommands } from './config.js';
 import { registerStatsCommands } from './stats.js';
+import { registerWorkNextCommands } from './work-next.js';
 
 export function registerCommands(program: Command): void {
     // Register command groups
@@ -16,4 +17,5 @@ export function registerCommands(program: Command): void {
     registerImportExportCommands(program);
     registerConfigCommands(program);
     registerStatsCommands(program);
+    registerWorkNextCommands(program);
 }

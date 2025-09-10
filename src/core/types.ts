@@ -55,6 +55,27 @@ export interface TodoqConfig {
         status: TaskStatus;
         priority: number;
     };
+    claude?: {
+        enabled: boolean;
+        claudePath?: string;
+        maxIterations?: number;
+        timeout?: number;
+        model?: string;
+        verbose?: boolean;
+        streaming?: boolean;
+        outputFormat?: 'text' | 'json' | 'stream-json';
+        permissionMode?: 'acceptEdits' | 'bypassPermissions' | 'default' | 'plan';
+        dangerouslySkipPermissions?: boolean;
+        allowedTools?: string[];
+        customArgs?: string[];
+        continueSession?: boolean;
+        appendSystemPrompt?: string;
+        // Retry configuration
+        maxRetries?: number;
+        retryDelay?: number;
+        retryBackoffMultiplier?: number;
+        maxRetryDelay?: number;
+    };
 }
 
 export interface OperationResult<T> {

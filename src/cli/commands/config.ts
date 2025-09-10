@@ -16,6 +16,7 @@ export function registerConfigCommands(program: Command): void {
         .command('get')
         .description('Get configuration value')
         .argument('<key>', 'configuration key (e.g., database.path)')
+        .option('--json', 'output as JSON')
         .action(async (key, options) => {
             const config = options._config as TodoqConfig;
 
@@ -46,7 +47,7 @@ export function registerConfigCommands(program: Command): void {
                 const [key, ...valueParts] = keyValue.split('=');
                 const value = valueParts.join('=');
 
-                if (!key || value === undefined) {
+                if (!key || value === '' || valueParts.length === 0) {
                     console.log(chalk.red('Invalid format. Use: key=value'));
                     return;
                 }
@@ -84,6 +85,7 @@ export function registerConfigCommands(program: Command): void {
         .command('list')
         .alias('show')
         .description('Show all configuration')
+        .option('--json', 'output as JSON')
         .action(async (options) => {
             const config = options._config as TodoqConfig;
 
@@ -95,6 +97,9 @@ export function registerConfigCommands(program: Command): void {
                 printConfigSection('Database', config.database);
                 printConfigSection('Display', config.display);
                 printConfigSection('Defaults', config.defaults);
+                if (config.claude) {
+                    printConfigSection('Claude', config.claude);
+                }
             }
         });
 
@@ -102,7 +107,7 @@ export function registerConfigCommands(program: Command): void {
     configCmd
         .command('edit')
         .description('Open config in editor')
-        .action(async (options) => {
+        .action(async (_options) => {
             try {
                 let configPath = findConfigFile();
                 

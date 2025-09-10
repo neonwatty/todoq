@@ -1,7 +1,8 @@
 import { build } from 'esbuild';
-import { writeFileSync, readFileSync, chmodSync } from 'fs';
+import { writeFileSync, readFileSync, chmodSync, mkdirSync, copyFileSync, existsSync } from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
 
 const execAsync = promisify(exec);
 
@@ -13,7 +14,7 @@ await build({
   target: 'node22',
   outfile: 'dist/cli/index.js',
   format: 'esm',
-  external: ['better-sqlite3', 'inquirer', 'chalk', 'ora', 'cli-table3', 'cosmiconfig', 'zod', 'commander', 'fs', 'path', 'os']
+  external: ['better-sqlite3', 'inquirer', 'chalk', 'ora', 'cli-table3', 'cosmiconfig', 'zod', 'commander', 'execa', 'fs', 'path', 'os']
 });
 
 // Generate TypeScript declarations using tsc
@@ -34,5 +35,25 @@ if (!content.startsWith('#!/usr/bin/env node')) {
 
 // Make executable
 chmodSync('dist/cli/index.js', 0o755);
+
+// Copy prompt files to dist
+const promptsSrcDir = 'src/services/claude/prompts';
+const promptsDistDir = 'dist/services/claude/prompts';
+
+if (existsSync(promptsSrcDir)) {
+  // Create prompts directory in dist
+  mkdirSync(promptsDistDir, { recursive: true });
+  
+  // Copy prompt files
+  const promptFiles = ['task-execution.md', 'README.md'];
+  for (const file of promptFiles) {
+    const srcFile = path.join(promptsSrcDir, file);
+    const distFile = path.join(promptsDistDir, file);
+    if (existsSync(srcFile)) {
+      copyFileSync(srcFile, distFile);
+      console.log(`Copied prompt file: ${file}`);
+    }
+  }
+}
 
 console.log('Build completed successfully!');

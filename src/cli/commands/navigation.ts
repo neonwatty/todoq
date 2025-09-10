@@ -241,6 +241,7 @@ export function registerNavigationCommands(program: Command): void {
     program
         .command('progress')
         .description('Show tree with completion percentages')
+        .option('--json', 'output as JSON')
         .option('--root <number>', 'root task number to show progress for')
         .action(async (options) => {
             const config = options._config as TodoqConfig;
@@ -285,6 +286,7 @@ export function registerNavigationCommands(program: Command): void {
         .alias('find')
         .description('Search tasks by number, name, or description')
         .argument('<query>', 'search query')
+        .option('--json', 'output as JSON')
         .action(async (query, options) => {
             const config = options._config as TodoqConfig;
             const navigationService = options._navigationService as NavigationService;

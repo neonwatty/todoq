@@ -1,0 +1,37 @@
+{
+  "database": {
+    "path": ".todoq/todoq.db",
+    "autoMigrate": true,
+    "walMode": true
+  },
+  "display": {
+    "format": "tree",
+    "colors": true,
+    "showCompleted": false
+  },
+  "defaults": {
+    "status": "pending",
+    "priority": 1
+  },
+  "claude": {
+    "enabled": true,
+    "model": "opusplan",
+    "verbose": true,
+    "outputFormat": "stream-json",
+    "dangerouslySkipPermissions": true,
+    
+    "comment": "Retry configuration for resilient headless execution",
+    "maxRetries": 10,
+    "retryDelay": 1000,
+    "retryBackoffMultiplier": 2,
+    "maxRetryDelay": 30000,
+    
+    "retry_behavior_explanation": {
+      "description": "When Claude Code encounters transient errors (exit codes 1-2, timeouts), it will automatically retry with exponential backoff",
+      "example_delays": "1s → 2s → 4s → 8s → 16s → 30s (capped) → 30s...",
+      "retryable_errors": ["Exit code 1", "Exit code 2", "ETIMEDOUT", "timedOut flag"],
+      "non_retryable_errors": ["Exit code 127 (command not found)", "Permission denied", "ENOENT (file not found)"],
+      "usage": "todoq work-next --config example-retry-config.json"
+    }
+  }
+}

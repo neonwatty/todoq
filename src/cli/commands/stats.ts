@@ -8,6 +8,7 @@ export function registerStatsCommands(program: Command): void {
     program
         .command('stats')
         .description('Show task statistics')
+        .option('--json', 'output as JSON')
         .action(async (options) => {
             const taskService = options._taskService as TaskService;
 
@@ -28,6 +29,7 @@ export function registerStatsCommands(program: Command): void {
     program
         .command('status')
         .description('Overall project status summary')
+        .option('--json', 'output as JSON')
         .action(async (options) => {
             const taskService = options._taskService as TaskService;
             const navigationService = options._navigationService as NavigationService;

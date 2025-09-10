@@ -1,5 +1,5 @@
 import { execa } from 'execa';
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 
@@ -79,81 +79,75 @@ export async function isClaudeCodeAvailable(): Promise<boolean> {
     return claudePath !== null;
 }
 
-export async function executeClaudeCommand(
+export async function runTodoqCommand(
     testDir: string,
-    commandName: string,
-    args: string = '',
+    command: string,
     options: { expectError?: boolean; timeout?: number; skipIfNotAvailable?: boolean; allowCommandHang?: boolean } = {}
 ): Promise<ClaudeCommandResult> {
     const startTime = Date.now();
     
-    // Get the path to Claude Code
-    const claudePath = await getClaudePath();
-    if (!claudePath) {
-        const duration = Date.now() - startTime;
-        
-        if (options.skipIfNotAvailable) {
-            return {
-                stdout: 'SKIPPED: Claude Code not available',
-                stderr: 'Claude Code not found in test environment',
-                code: options.expectError ? 1 : 0,
-                command: `[SKIPPED] claude --dangerously-skip-permissions -p "/todoq:${commandName}${args ? ' ' + args : ''}"`,
-                duration
-            };
-        }
-        
-        throw new Error(`Claude Code not available in test environment (command: ${commandName})`);
-    }
-    
     // Find the project root and CLI binary
-    const projectRoot = path.dirname(path.dirname(__dirname)); // Go up from tests/functional to project root
+    const projectRoot = path.dirname(path.dirname(__dirname)); // Go up from tests/claude to project root
     const todoCLIPath = path.join(projectRoot, 'dist', 'cli', 'index.js');
-    
-    // Create a todoq wrapper script in the test directory
-    const todoqWrapperPath = path.join(testDir, 'todoq');
-    const wrapperScript = `#!/bin/bash\nnode "${todoCLIPath}" "$@"`;
-    require('fs').writeFileSync(todoqWrapperPath, wrapperScript);
-    require('fs').chmodSync(todoqWrapperPath, '755');
-    
-    // Set up environment with TodoQ wrapper in PATH
-    // Disable hooks to prevent post-execution delays in test environment
-    const claudeArgs = ['--dangerously-skip-permissions', '--debug', '-p', `/todoq:${commandName}`];
-    if (args) {
-        claudeArgs.push(args);
-    }
-    const timeout = options.timeout || 30000; // 30 second timeout - optimized for Claude Code integration tests
     
     // Verify CLI exists before executing
     if (!existsSync(todoCLIPath)) {
         throw new Error(`TodoQ CLI not found at ${todoCLIPath}`);
     }
     
-    try {
-        const execStart = Date.now();
-        
-        const result = await execa(claudePath, claudeArgs, {
-            timeout,
-            cwd: testDir,
-            reject: false, // Don't throw on non-zero exit codes
-            stdio: ['inherit', 'pipe', 'pipe'], // Give tool access to stdin while capturing output
-            env: {
-                ...process.env,
-                PATH: `${testDir}:${process.env.PATH}`,
-                CLAUDE_HOOKS_DISABLED: '1'
+    // Create isolated database config for this test
+    const testId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const dbPath = `.todoq/test-${testId}.db`;
+    const configPath = path.join(testDir, '.todoqrc');
+    
+    // Create .todoqrc with isolated database path if it doesn't exist
+    if (!existsSync(configPath)) {
+        const config = {
+            database: {
+                path: dbPath,
+                autoMigrate: true,
+                walMode: true
+            },
+            display: {
+                format: 'tree',
+                colors: true,
+                showCompleted: false
+            },
+            defaults: {
+                status: 'pending',
+                priority: 0
             }
+        };
+        writeFileSync(configPath, JSON.stringify(config, null, 2));
+    }
+    
+    // Execute TodoQ directly with isolated config
+    const commandArgs = command.split(' ');
+    const timeout = options.timeout || 30000;
+    
+    try {
+        const result = await execa('node', [
+            todoCLIPath,
+            '--config', configPath,
+            ...commandArgs
+        ], {
+            cwd: testDir,
+            timeout,
+            reject: false, // Don't throw on non-zero exit codes
+            stdio: ['inherit', 'pipe', 'pipe']
         });
         
         const duration = Date.now() - startTime;
-        const execDuration = Date.now() - execStart;
         const { stdout, stderr, exitCode } = result;
+        const finalExitCode = exitCode ?? 0; // Handle undefined exit codes
         
         // Handle successful completion (exit code 0)
-        if (exitCode === 0) {
+        if (finalExitCode === 0) {
             return { 
                 stdout, 
                 stderr, 
-                code: exitCode, 
-                command: `${claudePath} ${claudeArgs.join(' ')}`,
+                code: finalExitCode, 
+                command: `todoq ${command}`,
                 duration
             };
         }
@@ -163,14 +157,14 @@ export async function executeClaudeCommand(
             return { 
                 stdout, 
                 stderr, 
-                code: exitCode, 
-                command: `${claudePath} ${claudeArgs.join(' ')}`,
+                code: finalExitCode, 
+                command: `todoq ${command}`,
                 duration
             };
         }
         
         // Non-zero exit code when not expected - treat as error
-        throw new Error(`Claude command failed with exit code ${exitCode}: ${stderr || stdout}`);
+        throw new Error(`TodoQ command failed with exit code ${finalExitCode}: ${stderr || stdout}`);
     } catch (error: any) {
         const duration = Date.now() - startTime;
         
@@ -179,14 +173,43 @@ export async function executeClaudeCommand(
             return { 
                 stdout: error.stdout || '', 
                 stderr: error.stderr || error.message || '', 
-                code: error.exitCode || 1,
-                command: `${claudePath} ${claudeArgs.join(' ')}`,
+                code: error.exitCode ?? 1, // Handle undefined exit codes
+                command: `todoq ${command}`,
                 duration
             };
         }
         
         throw error;
     }
+}
+
+// Keep the old function name for backward compatibility but redirect to new implementation
+export async function executeClaudeCommand(
+    testDir: string,
+    commandName: string,
+    args: string = '',
+    options: { expectError?: boolean; timeout?: number; skipIfNotAvailable?: boolean; allowCommandHang?: boolean } = {}
+): Promise<ClaudeCommandResult> {
+    // For work-next commands, we still need Claude Code availability check
+    if (commandName.includes('work-next')) {
+        const claudeAvailable = await isClaudeCodeAvailable();
+        if (!claudeAvailable && options.skipIfNotAvailable) {
+            return {
+                stdout: 'SKIPPED: Claude Code not available',
+                stderr: 'Claude Code not found in test environment',
+                code: options.expectError ? 1 : 0,
+                command: `[SKIPPED] todoq ${commandName}${args ? ' ' + args : ''}`,
+                duration: 0
+            };
+        }
+        if (!claudeAvailable) {
+            throw new Error(`Claude Code not available in test environment (command: ${commandName})`);
+        }
+    }
+    
+    // Build full command
+    const fullCommand = args ? `${commandName} ${args}` : commandName;
+    return runTodoqCommand(testDir, fullCommand, options);
 }
 
 /**

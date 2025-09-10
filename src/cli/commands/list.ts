@@ -12,7 +12,7 @@ export function registerListCommands(program: Command): void {
         .option('--parent <number>', 'show subtasks of parent')
         .option('--no-subtasks', 'show only parent tasks')
         .option('--tree', 'show hierarchical tree view')
-        .option('--format <format>', 'output format (tree, list, table)', 'list')
+        .option('--format <format>', 'output format (tree, list, table)')
         .option('--completed', 'include completed tasks')
         .option('--detailed', 'show all task fields and complete information')
         .option('--json', 'output as JSON')
@@ -45,7 +45,7 @@ export function registerListCommands(program: Command): void {
                 if (options.json) {
                     console.log(JSON.stringify(tasks, null, 2));
                 } else {
-                    const format = options.tree ? 'tree' : (options.format || config.display.format);
+                    const format = options.tree ? 'tree' : (options.format || config.display.format || 'list');
                     const detailed = options.detailed || false;
                     console.log(formatTaskList(tasks, config, format, detailed));
                 }

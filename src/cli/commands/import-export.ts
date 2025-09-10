@@ -167,11 +167,13 @@ export function registerImportExportCommands(program: Command): void {
     program
         .command('export')
         .description('Export tasks as JSON')
-        .option('-f, --file <file>', 'output file path')
+        .argument('[file]', 'output file path')
         .option('--pretty', 'pretty-printed JSON output')
         .option('--status <status>', 'filter by status')
         .option('--completed', 'include completed tasks')
-        .action(async (options) => {
+        .option('--include-completed', 'include completed tasks')
+        .option('--parent <number>', 'filter by parent task')
+        .action(async (file, options) => {
             const config = options._config as TodoqConfig;
             const taskService = options._taskService as TaskService;
 
@@ -182,43 +184,55 @@ export function registerImportExportCommands(program: Command): void {
                     listOptions.status = options.status;
                 }
 
-                if (options.completed || config.display.showCompleted) {
+                if (options.completed || options.includeCompleted || config.display.showCompleted) {
                     listOptions.includeCompleted = true;
+                }
+
+                if (options.parent) {
+                    listOptions.parentNumber = options.parent;
                 }
 
                 const tasks = taskService.list(listOptions);
 
                 // Convert tasks to export format
-                const exportTasks = tasks.map(task => ({
-                    number: task.taskNumber,
-                    name: task.name,
-                    description: task.description,
-                    parent: task.parentId ? tasks.find(t => t.id === task.parentId)?.taskNumber : null,
-                    status: task.status,
-                    priority: task.priority,
-                    docs_references: task.docsReferences,
-                    testing_strategy: task.testingStrategy,
-                    files: task.files,
-                    notes: task.notes,
-                    completion_notes: task.completionNotes
-                })).filter(task => 
-                    // Remove undefined/null values
-                    Object.keys(task).reduce((acc: any, key) => {
-                        if (task[key as keyof typeof task] !== undefined && task[key as keyof typeof task] !== null) {
-                            acc[key] = task[key as keyof typeof task];
-                        }
-                        return acc;
-                    }, {})
-                );
+                const exportTasks = tasks.map(task => {
+                    const exportTask: any = {
+                        number: task.taskNumber,
+                        name: task.name,
+                        description: task.description,
+                        parent: task.parentId ? tasks.find(t => t.id === task.parentId)?.taskNumber || null : null,
+                        status: task.status,
+                        priority: task.priority
+                    };
+                    
+                    // Only include optional fields if they have values
+                    if (task.docsReferences && task.docsReferences.length > 0) {
+                        exportTask.docs_references = task.docsReferences;
+                    }
+                    if (task.testingStrategy) {
+                        exportTask.testing_strategy = task.testingStrategy;
+                    }
+                    if (task.files && task.files.length > 0) {
+                        exportTask.files = task.files;
+                    }
+                    if (task.notes) {
+                        exportTask.notes = task.notes;
+                    }
+                    if (task.completionNotes) {
+                        exportTask.completion_notes = task.completionNotes;
+                    }
+                    
+                    return exportTask;
+                });
 
                 const exportData = { tasks: exportTasks };
                 const jsonOutput = options.pretty 
                     ? JSON.stringify(exportData, null, 2)
                     : JSON.stringify(exportData);
 
-                if (options.file) {
-                    writeFileSync(options.file, jsonOutput);
-                    console.log(chalk.green(`Exported ${tasks.length} tasks to ${options.file}`));
+                if (file) {
+                    writeFileSync(file, jsonOutput);
+                    console.log(chalk.green(`Exported ${tasks.length} tasks to ${file}`));
                 } else {
                     console.log(jsonOutput);
                 }
@@ -228,7 +242,7 @@ export function registerImportExportCommands(program: Command): void {
         });
 }
 
-function readStdin(): Promise<string> {
+export function readStdin(): Promise<string> {
     return new Promise((resolve, reject) => {
         let data = '';
         
