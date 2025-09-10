@@ -39,10 +39,13 @@ describe('Configuration Recovery', () => {
     });
 
     let consoleSpies: ReturnType<typeof captureConsole>;
+    let originalEnv: NodeJS.ProcessEnv;
 
     beforeEach(() => {
         fs.mkdirSync(TEST_CONFIG_DIR, { recursive: true });
         consoleSpies = captureConsole();
+        // Store original environment variables
+        originalEnv = { ...process.env };
     });
 
     afterEach(() => {
@@ -52,6 +55,16 @@ describe('Configuration Recovery', () => {
         if (fs.existsSync(TEST_CONFIG_DIR)) {
             fs.rmSync(TEST_CONFIG_DIR, { recursive: true, force: true });
         }
+        
+        // Clean up environment variables - restore original state
+        // Clear all TODOQ_ prefixed env vars first
+        Object.keys(process.env).forEach(key => {
+            if (key.startsWith('TODOQ_')) {
+                delete process.env[key];
+            }
+        });
+        // Then restore original values
+        Object.assign(process.env, originalEnv);
     });
 
     describe('Malformed JSON Recovery', () => {
@@ -243,7 +256,7 @@ describe('Configuration Recovery', () => {
                 claude: {
                     enabled: true,
                     maxIterations: "15" as any,      // string
-                    timeout: "300000" as any,        // string
+                    timeout: "1500000" as any,        // string
                     maxRetries: "5" as any           // string
                 }
             });
@@ -252,7 +265,7 @@ describe('Configuration Recovery', () => {
             
             // Current behavior: strings are passed through without coercion
             expect(config.claude?.maxIterations).toBe("15");
-            expect(config.claude?.timeout).toBe("300000");
+            expect(config.claude?.timeout).toBe("1500000");
             expect(config.claude?.maxRetries).toBe("5");
             
             // TODO: After implementing coercion, these should be numbers
@@ -403,7 +416,7 @@ describe('Configuration Recovery', () => {
             
             // With validation, should fallback to defaults for invalid env
             expect(config.claude?.maxIterations).toBe(defaultConfig.claude?.maxIterations);
-            expect(config.claude?.timeout).toBe(60000); // Minimum enforced
+            expect(config.claude?.timeout).toBe(900000); // Minimum enforced
             
             expect(consoleSpies.warn).toHaveBeenCalledWith(
                 expect.stringContaining('Invalid number')
