@@ -509,20 +509,65 @@ The database uses WAL mode for better concurrency and includes proper indexes fo
 
 ## Claude Code Integration
 
-TodoQ integrates with Claude Code for AI-powered task execution. The `work-next` command supports automatic retry with exponential backoff for resilient headless execution:
+TodoQ integrates with Claude Code for AI-powered task execution. The `work-next` command allows Claude to automatically work through your tasks.
+
+### Basic Commands
+
+```bash
+# Have Claude work on the next task
+todoq work-next
+
+# See Claude's full conversation and reasoning
+todoq --verbose work-next --output-format stream-json
+
+# Use specific model and settings
+todoq work-next --model opus --max-iterations 15
+
+# Advanced options with permissions
+todoq work-next --permission-mode plan --continue-session
+todoq work-next --dangerously-skip-permissions  # Full permissions for automated workflows
+```
+
+### Example Output
+
+```bash
+$ todoq work-next
+
+📋 Current task: 1.2 - Implement user authentication
+Status: pending → in_progress
+
+🤖 Claude is working on this task...
+✓ Read src/auth/login.ts
+✓ Updated authentication logic
+✓ Added input validation
+✓ Created unit tests
+✓ All tests passing
+
+✅ Task completed successfully!
+Status: in_progress → completed
+Next task: 1.3 - Add password reset functionality
+```
+
+### Configuration
+
+The `work-next` command supports automatic retry with exponential backoff for resilient headless execution:
 
 ```json
 {
   "claude": {
-    "maxRetries": 10,        // Retry up to 10 times
-    "retryDelay": 2000,      // Start with 2s delay
+    "enabled": true,
+    "model": "opusplan",           // Uses opus for planning, sonnet for execution
+    "verbose": true,               // Show Claude's conversation
+    "outputFormat": "stream-json", // Real-time output format
+    "maxRetries": 10,              // Retry up to 10 times
+    "retryDelay": 2000,            // Start with 2s delay
     "retryBackoffMultiplier": 2,  // Double each retry
-    "maxRetryDelay": 30000   // Cap at 30s
+    "maxRetryDelay": 30000         // Cap at 30s
   }
 }
 ```
 
-Retries on exit codes 1-2 and timeouts. See [CLAUDE.md](CLAUDE.md) for details.
+Retries on exit codes 1-2 and timeouts. See [CLAUDE.md](CLAUDE.md) for complete configuration options and examples.
 
 ## Testing
 
