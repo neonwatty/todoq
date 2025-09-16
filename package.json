@@ -1,6 +1,6 @@
 {
   "name": "todoq",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Hierarchical task management CLI with SQLite backend",
   "type": "module",
   "main": "dist/cli/index.js",
@@ -62,6 +62,7 @@
     "cli-table3": "^0.6.3",
     "commander": "^11.1.0",
     "cosmiconfig": "^8.3.6",
+    "execa": "^9.6.0",
     "inquirer": "^9.2.12",
     "ora": "^6.3.1",
     "zod": "^3.22.4"
@@ -70,12 +71,11 @@
     "@types/better-sqlite3": "^7.6.8",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.10.6",
-    "@typescript-eslint/eslint-plugin": "^6.18.1",
-    "@typescript-eslint/parser": "^6.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
     "@vitest/coverage-v8": "^1.6.1",
     "esbuild": "^0.19.11",
     "eslint": "^8.56.0",
-    "execa": "^9.6.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.3"

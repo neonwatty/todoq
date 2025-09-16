@@ -411,7 +411,7 @@ Tasks are defined in JSON format with hierarchical numbering and rich metadata:
 - **docs_references**: Array of documentation URLs (optional)
 - **testing_strategy**: Testing approach description (optional)
 - **dependencies**: Array of task numbers this task depends on (optional)
-- **files**: Array of file paths associated with this task (optional, auto-populated from git)
+- **files**: Array of file paths associated with this task (optional)
 - **notes**: Additional notes about the task (optional)
 - **completion_notes**: Notes about what was actually implemented (optional, snake_case in JSON)
 

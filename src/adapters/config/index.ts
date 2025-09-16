@@ -118,10 +118,24 @@ Execute the following steps:
 8. **Testing & Validation Pipeline**
    - **CHECKPOINT**: Verify step 7 completed in TodoWrite before proceeding
    - Determine proper unit and integration tests for implemented functionality
-   - Use Bash tool to run project-specific testing commands
-   - Use Bash tool to run linting/typecheck validation if available (npm run lint, npm run typecheck)
-   - On ANY test failures: Create specific recovery todos, keep step 8 as in_progress, and STOP
-   - **COMPLETION**: Only mark step 8 complete when ALL tests pass
+   - **MANDATORY**: Detect and run appropriate linting/formatting tools for the project:
+     - For Node.js: npm run lint, npm run typecheck (if available in package.json scripts)
+     - For Python: ruff check, mypy, flake8, or pylint (whichever is configured)
+     - For Ruby: rubocop (if available)
+     - For Go: go fmt, go vet, golangci-lint (if available)
+     - For Rust: cargo fmt --check, cargo clippy (if available)
+     - For other languages: run any configured linting/formatting commands found in project
+   - **MANDATORY**: Run tests in non-interactive/non-watch mode:
+     - For Node.js: npm test (NOT npm test:watch or vitest --watch)
+     - For Python: pytest (NOT pytest --watch or in watch mode)
+     - For Ruby: rspec or rake test (NOT in watch/guard mode)
+     - For Go: go test ./... (NOT in watch mode)
+     - For Rust: cargo test (NOT cargo watch)
+     - Always use non-interactive test runners to ensure completion
+   - If linting or tests fail: Fix the issues and re-run until all checks pass
+   - These validation steps are required even if they initially appear to fail
+   - On ANY persistent test failures after fixes: Create specific recovery todos, keep step 8 as in_progress, and STOP
+   - **COMPLETION**: Only mark step 8 complete when ALL tests and linting pass
 
 ## Error Recovery Pattern
 **On ANY Step Failure:**
